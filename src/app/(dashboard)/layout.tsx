@@ -1,9 +1,18 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/dashboard/app-shell";
 
-export default function DashboardGroupLayout({
+export default async function DashboardGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell>{children}</AppShell>;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  return <AppShell user={user}>{children}</AppShell>;
 }

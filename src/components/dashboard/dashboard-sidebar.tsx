@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -14,9 +14,11 @@ import {
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 type NavItem = {
   label: string;
@@ -33,13 +35,24 @@ const navItems: NavItem[] = [
   { label: "Users", icon: Users, href: "/users", section: "Administration" },
 ];
 
-export function SidebarContent({ collapsed = false, onItemClick }: { collapsed?: boolean; onItemClick?: () => void }) {
+export function SidebarContent({ collapsed = false, onItemClick, user }: { collapsed?: boolean; onItemClick?: () => void; user?: User }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/sign-in");
+  };
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
     <div className="flex h-full flex-col">
@@ -213,8 +226,9 @@ export function SidebarContent({ collapsed = false, onItemClick }: { collapsed?:
         >
           <div className="relative">
             <Avatar className="size-8 shrink-0 border border-border">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
               <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-[9px] font-bold text-white">
-                AD
+                {initials}
               </AvatarFallback>
             </Avatar>
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-emerald-500" />
@@ -223,22 +237,21 @@ export function SidebarContent({ collapsed = false, onItemClick }: { collapsed?:
             <>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[12px] font-semibold text-foreground leading-tight">
-                  Store Admin
+                  {displayName}
                 </p>
-                <p className="text-[10px] text-primary">
-                  Manager
+                <p className="truncate text-[10px] text-primary">
+                  {user?.email || "user@beagea.com"}
                 </p>
               </div>
-              <Link href="/sign-in">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                  <LogOut className="size-3.5" />
-                  <span className="sr-only">Sign out</span>
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={handleSignOut}
+              >
+                <LogOut className="size-3.5" />
+                <span className="sr-only">Sign out</span>
+              </Button>
             </>
           )}
         </div>
@@ -247,7 +260,7 @@ export function SidebarContent({ collapsed = false, onItemClick }: { collapsed?:
   );
 }
 
-export function DashboardSidebar({ collapsed }: { collapsed: boolean }) {
+export function DashboardSidebar({ collapsed, user }: { collapsed: boolean; user: User }) {
   return (
     <aside
       className={cn(
@@ -255,7 +268,7 @@ export function DashboardSidebar({ collapsed }: { collapsed: boolean }) {
         collapsed ? "w-[60px] px-1.5" : "w-[16%] min-w-[250px] px-5",
       )}
     >
-      <SidebarContent collapsed={collapsed} />
+      <SidebarContent collapsed={collapsed} user={user} />
     </aside>
   );
 }

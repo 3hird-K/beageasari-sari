@@ -12,15 +12,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import type { User } from "@supabase/supabase-js";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, user }: { children: React.ReactNode; user: User }) {
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
 
   return (
     <div className="flex h-svh overflow-hidden bg-background text-foreground">
       {/* Desktop Sidebar */}
-      <DashboardSidebar collapsed={collapsed} />
+      <DashboardSidebar collapsed={collapsed} user={user} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* ── Top bar ── */}
@@ -43,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   Access Beagea modules and settings
                 </SheetDescription>
                 <div className="h-full px-5 py-6">
-                  <SidebarContent onItemClick={() => setOpen(false)} />
+                  <SidebarContent onItemClick={() => setOpen(false)} user={user} />
                 </div>
               </SheetContent>
             </Sheet>
