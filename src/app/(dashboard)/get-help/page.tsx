@@ -17,15 +17,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { 
-  HelpCircle, 
   Search, 
-  BookOpen, 
   MessageSquare, 
   Video, 
   FileText,
-  Thermometer,
-  Fan,
-  Sprout,
+  ShoppingCart,
+  Package,
+  TrendingUp,
   Cpu
 } from "lucide-react";
 
@@ -35,7 +33,7 @@ export default function GetHelpPage() {
       <PageHeader
         supertitle="SUPPORT CENTER"
         title="Get Help & Documentation"
-        subtitle="Learn how to navigate SmartGrow and get the most out of your IoT greenhouse monitoring system."
+        subtitle="Learn how to navigate your POS system and get the most out of your inventory management."
       />
 
       {/* Search Header */}
@@ -44,68 +42,70 @@ export default function GetHelpPage() {
           <div className="relative max-w-2xl mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input 
-              placeholder="Search for guides, sensor setup, or troubleshooting..." 
+              placeholder="Search for guides, POS setup, or troubleshooting..." 
               className="pl-10 h-12 bg-background/80 border-border/50 shadow-sm text-sm"
             />
           </div>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Sensor Setup</Badge>
-            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Actuator Control</Badge>
-            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Growth Tracking</Badge>
-            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">ESP32 Config</Badge>
+            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Checkout</Badge>
+            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Inventory</Badge>
+            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Reports</Badge>
+            <Badge variant="secondary" className="bg-accent/50 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-accent">Hardware</Badge>
           </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* ESP32 & Sensor Setup */}
+        {/* POS Guide */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
-              <Thermometer className="size-4 text-primary" />
+              <ShoppingCart className="size-4 text-primary" />
             </div>
-            <CardTitle className="text-base font-bold tracking-tight">ESP32 & Sensor Setup</CardTitle>
+            <CardTitle className="text-base font-bold tracking-tight">Point of Sale (POS) Guide</CardTitle>
             <CardDescription className="text-[11px] font-medium text-muted-foreground/60 leading-relaxed">
-              How the DHT22 sensors connect to the ESP32 microcontroller, and how temperature, humidity, CO₂, and soil moisture readings are collected across greenhouse zones.
+              Learn how to process transactions, scan items, apply discounts, and manage cash shifts seamlessly.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="link" className="p-0 h-auto text-[11px] font-bold uppercase tracking-widest text-primary hover:no-underline">
-              Read Sensor Guide →
+              Read Checkout Guide →
             </Button>
           </CardContent>
         </Card>
 
+        {/* Inventory Guide */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <div className="size-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-2">
-              <Fan className="size-4 text-orange-500" />
+              <Package className="size-4 text-orange-500" />
             </div>
-            <CardTitle className="text-base font-bold tracking-tight">Actuator Automation</CardTitle>
+            <CardTitle className="text-base font-bold tracking-tight">Inventory Management</CardTitle>
             <CardDescription className="text-[11px] font-medium text-muted-foreground/60 leading-relaxed">
-              How fans, foggers, sprinklers, and LED grow lights are automatically triggered by the ESP32 based on real-time environmental thresholds.
+              How to add new products, update stock quantities, set low-stock alerts, and organize categories.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="link" className="p-0 h-auto text-[11px] font-bold uppercase tracking-widest text-orange-500 hover:no-underline">
-              View Automation Logic →
+              View Inventory Logic →
             </Button>
           </CardContent>
         </Card>
 
+        {/* Sales & Reports */}
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-2">
-              <Sprout className="size-4 text-emerald-500" />
+              <TrendingUp className="size-4 text-emerald-500" />
             </div>
-            <CardTitle className="text-base font-bold tracking-tight">Mushroom Growth Tracking</CardTitle>
+            <CardTitle className="text-base font-bold tracking-tight">Sales & Reports Tracking</CardTitle>
             <CardDescription className="text-[11px] font-medium text-muted-foreground/60 leading-relaxed">
-              How to track cultivation batches through inoculation, incubation, primordia, fruiting, and harvest stages — including health scores and yield estimation.
+              Analyze your store&apos;s performance with daily sales summaries, profit tracking, and best-selling product charts.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="link" className="p-0 h-auto text-[11px] font-bold uppercase tracking-widest text-emerald-500 hover:no-underline">
-              Growth Guide →
+              Reporting Guide →
             </Button>
           </CardContent>
         </Card>
@@ -120,33 +120,33 @@ export default function GetHelpPage() {
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>What is the ideal temperature and humidity range for mushroom growing?</AccordionTrigger>
+                <AccordionTrigger>How do I void a transaction or remove an item?</AccordionTrigger>
                 <AccordionContent>
-                  The optimal temperature range is 24–28°C and humidity should stay between 80–95% RH. The dashboard will display an &quot;Optimal&quot; or &quot;Ideal Range&quot; badge when readings fall within these thresholds.
+                  During an active transaction in the POS tab, you can click the trash icon next to any item in the cart to remove it. To void a completed transaction, you need manager access and must navigate to the Sales history page.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>How does the ESP32 trigger actuators automatically?</AccordionTrigger>
+                <AccordionTrigger>How do I add a new product to the inventory?</AccordionTrigger>
                 <AccordionContent>
-                  The ESP32 reads sensor data every 2 hours. When temperature exceeds 28°C, the fan activates automatically. When humidity drops below 80%, the fogger turns on. You can also set scheduled triggers or activate actuators manually from the Actuator Logs page.
+                  Navigate to the Inventory page and click the &quot;Add Product&quot; button. You&apos;ll need to enter the product name, SKU or barcode, price, category, and initial stock quantity.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger>What do the growth stages (inoculation, incubation, fruiting) mean?</AccordionTrigger>
+                <AccordionTrigger>What happens when a product is out of stock?</AccordionTrigger>
                 <AccordionContent>
-                  Each mushroom batch goes through 6 lifecycle stages: Inoculation (spawning), Incubation (mycelium colonisation), Primordia (pinning), Fruiting (mushroom body development), Harvest (picking), and Completed. The Growth Tracking page shows the current stage, progress percentage, and estimated harvest date for each batch.
+                  When an item&apos;s stock reaches zero, it will still appear in the POS but will have a visual indicator. The system will also generate a &quot;Low Stock&quot; or &quot;Out of Stock&quot; notification if you have configured those alerts in Settings.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-4">
-                <AccordionTrigger>What does the &quot;Warning&quot; or &quot;Critical&quot; status mean on a sensor reading?</AccordionTrigger>
+                <AccordionTrigger>How do I connect the receipt printer?</AccordionTrigger>
                 <AccordionContent>
-                  A &quot;Warning&quot; status means the reading is slightly outside the optimal range but not yet harmful. A &quot;Critical&quot; status indicates a dangerous threshold has been reached — such as temperature above 32°C or humidity below 60% — which may damage the mushroom crop if not addressed immediately.
+                  Make sure the receipt printer is plugged in and turned on. Go to Settings &gt; Store to view connected hardware. The system supports standard POS printers via USB or local network. Check the hardware integration guide for specific printer setups.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-5">
-                <AccordionTrigger>How do I view sensor data for a specific greenhouse zone?</AccordionTrigger>
+                <AccordionTrigger>Can I view sales from a previous shift?</AccordionTrigger>
                 <AccordionContent>
-                  Navigate to the Sensor Readings page and use the zone filter dropdown (Zone A, B, C, or D) to view readings from a specific area. You can also filter by status (Normal, Warning, Critical) to quickly find problem areas.
+                  Yes, navigate to the Reports page. You can filter the dashboard by &quot;Today&quot;, &quot;Yesterday&quot;, &quot;This Week&quot;, or select a custom date range to review past transactions and shift summaries.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -159,7 +159,7 @@ export default function GetHelpPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-bold tracking-tight">Still need help?</CardTitle>
               <CardDescription className="text-[11px] font-medium text-muted-foreground/60">
-                Reach out for technical support with your SmartGrow system.
+                Reach out for technical support with your Beagea POS system.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -174,14 +174,14 @@ export default function GetHelpPage() {
                 <Video className="size-4 text-orange-500" />
                 <div className="text-left">
                   <p className="text-xs font-bold">Watch Setup Tutorials</p>
-                  <p className="text-[10px] text-muted-foreground">ESP32 wiring & sensor calibration guides</p>
+                  <p className="text-[10px] text-muted-foreground">Hardware & software setup guides</p>
                 </div>
               </Button>
               <Button variant="outline" className="w-full justify-start gap-3 border-border/50 h-10">
                 <FileText className="size-4 text-emerald-500" />
                 <div className="text-left">
                   <p className="text-xs font-bold">Download User Manual</p>
-                  <p className="text-[10px] text-muted-foreground">Comprehensive PDF guide (v1.0)</p>
+                  <p className="text-[10px] text-muted-foreground">Comprehensive PDF guide (v2.0)</p>
                 </div>
               </Button>
             </CardContent>
@@ -192,8 +192,8 @@ export default function GetHelpPage() {
               <Cpu className="size-5 text-primary" />
             </div>
             <div>
-              <p className="text-[13px] font-bold text-foreground">SmartGrow v1.0.0 — ESP32 Connected</p>
-              <p className="text-[11px] text-muted-foreground">Your greenhouse monitoring system is running the latest firmware and dashboard build.</p>
+              <p className="text-[13px] font-bold text-foreground">Beagea POS v2.0.1</p>
+              <p className="text-[11px] text-muted-foreground">Your store management system is running the latest stable build.</p>
             </div>
           </div>
         </div>

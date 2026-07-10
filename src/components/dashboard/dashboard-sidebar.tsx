@@ -10,7 +10,7 @@ import {
   Users,
   Settings,
   HelpCircle,
-  MoreVertical,
+  LogOut,
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -229,14 +229,16 @@ export function SidebarContent({ collapsed = false, onItemClick }: { collapsed?:
                   Manager
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-              >
-                <MoreVertical className="size-3.5" />
-                <span className="sr-only">Menu</span>
-              </Button>
+              <Link href="/sign-in">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="size-3.5" />
+                  <span className="sr-only">Sign out</span>
+                </Button>
+              </Link>
             </>
           )}
         </div>
