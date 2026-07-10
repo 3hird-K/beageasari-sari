@@ -69,7 +69,7 @@ export function SidebarContent({ collapsed = false, onItemClick }: { collapsed?:
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-sm font-extrabold tracking-tight text-foreground leading-none">
-              RETAILPRO
+              BEAGEA
             </p>
             <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-widest text-primary">
               POS & Inventory

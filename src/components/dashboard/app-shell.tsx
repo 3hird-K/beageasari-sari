@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <SheetContent side="left" className="w-[280px] p-0 border-r border-sidebar-border bg-sidebar pt-10">
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <SheetDescription className="sr-only">
-                  Access RetailPro modules and settings
+                  Access Beagea modules and settings
                 </SheetDescription>
                 <div className="h-full px-5 py-6">
                   <SidebarContent onItemClick={() => setOpen(false)} />
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
 
             <span className="text-[10px] md:text-xs font-semibold uppercase tracking-widest text-muted-foreground truncate max-w-[150px] md:max-w-none">
-              RetailPro
+              Beagea
             </span>
           </div>
           <ThemeToggle />
