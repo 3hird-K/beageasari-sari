@@ -10,29 +10,29 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SmartGrow — IoT Greenhouse Dashboard",
-  description: "IoT-based smart greenhouse monitoring system for oyster mushroom cultivation. Real-time temperature and humidity tracking with automated climate control.",
-  metadataBase: new URL("https://smartgrow-ui.vercel.app"),
+  title: "Beagea Sari Sari Store — POS & Inventory",
+  description: "Modern Point of Sale and Inventory Management system for Beagea Sari Sari Store. Efficiently track sales, manage products, and monitor business performance.",
+  metadataBase: new URL("https://beageasari-sari.vercel.app/pos"),
   openGraph: {
-    title: "SmartGrow — IoT Greenhouse Dashboard",
-    description: "IoT-based smart greenhouse monitoring system for oyster mushroom cultivation with ESP32, DHT22 sensors, and automated climate control.",
-    url: "https://smartgrow-ui.vercel.app",
-    siteName: "SmartGrow",
-    locale: "en_US",
+    title: "Beagea Sari Sari Store — POS & Inventory",
+    description: "Modern Point of Sale and Inventory Management system for Beagea Sari Sari Store. Efficiently track sales, manage products, and monitor business performance.",
+    url: "https://beageasari-sari.vercel.app/pos",
+    siteName: "Beagea Sari Sari Store",
+    locale: "en_PH",
     type: "website",
     images: [
       {
         url: "/og-main.png",
         width: 1200,
         height: 630,
-        alt: "SmartGrow — IoT Greenhouse Dashboard",
+        alt: "Beagea Sari Sari Store Dashboard",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SmartGrow — IoT Smart Greenhouse",
-    description: "Real-time environmental monitoring for oyster mushroom cultivation with automated fan, fogger, and sprinkler control.",
+    title: "Beagea Sari Sari Store — POS & Inventory",
+    description: "Modern Point of Sale and Inventory Management system for Beagea Sari Sari Store. Efficiently track sales, manage products, and monitor business performance.",
     images: ["/og-main.png"],
   },
   icons: {
@@ -57,7 +57,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
-          storageKey="smartgrow-theme"
+          storageKey="beagea-theme"
           disableTransitionOnChange
         >
           {children}
