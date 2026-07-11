@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { TablePagination } from "@/components/dashboard/table-pagination";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type Product = {
   id: string;
@@ -52,8 +53,7 @@ type Product = {
 };
 
 export default function InventoryPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockStatusFilter, setStockStatusFilter] = useState("all");
@@ -70,25 +70,41 @@ export default function InventoryPage() {
     status: true,
   });
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data: products = [], isLoading, refetch } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setProducts(data);
-    } else {
-      console.error("Error fetching products:", error);
-    }
-    setIsLoading(false);
-  };
-
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
+  
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const supabase = createClient();
+    const channel = supabase
+      .channel("public:products")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "products",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
   
   // Dialog States
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -170,7 +186,7 @@ export default function InventoryPage() {
     if (res.success) {
       setIsAddOpen(false);
       toast.success("Product added successfully!");
-      fetchProducts();
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     } else {
       toast.error(res.error || "Failed to add product.");
     }
@@ -189,7 +205,7 @@ export default function InventoryPage() {
     if (res.success) {
       setIsEditOpen(false);
       toast.success("Product updated successfully!");
-      fetchProducts();
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     } else {
       toast.error(res.error || "Failed to update product.");
     }
@@ -213,7 +229,7 @@ export default function InventoryPage() {
     if (res.success) {
       setIsSupplyOpen(false);
       toast.success(`Successfully added ${addedStock} stock to ${editingProduct.name}!`);
-      fetchProducts();
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     } else {
       toast.error(res.error || "Failed to supply stock.");
     }
@@ -223,7 +239,7 @@ export default function InventoryPage() {
     const res = await deleteProductAction(id);
     if (res.success) {
       toast.success("Product deleted.");
-      fetchProducts();
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     } else {
       toast.error(res.error || "Failed to delete product.");
     }

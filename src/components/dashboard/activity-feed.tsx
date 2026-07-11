@@ -1,4 +1,6 @@
-import { ArrowUpRight } from "lucide-react";
+"use client";
+
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,83 +13,106 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export async function ActivityFeed({ className }: { className?: string }) {
-  const supabase = await createClient();
+export function ActivityFeed({ className }: { className?: string }) {
+  const { data: activities = [], isLoading } = useQuery({
+    queryKey: ["recent_activities"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: recentLogs, error } = await supabase
+        .from("audit_logs")
+        .select(`
+          id,
+          action,
+          entity_type,
+          details,
+          created_at,
+          user_id
+        `)
+        .order("created_at", { ascending: false })
+        .limit(3);
 
-  // Fetch recent audit logs
-  const { data: recentLogs } = await supabase
-    .from("audit_logs")
-    .select(`
-      id,
-      action,
-      entity_type,
-      details,
-      created_at,
-      user_id
-    `)
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  const activities: any[] = [];
-
-  // Add recent logs
-  if (recentLogs && recentLogs.length > 0) {
-    // Fetch users for the logs
-    const userIds = Array.from(new Set(recentLogs.map(log => log.user_id).filter(Boolean))) as string[];
-    let usersMap: Record<string, { full_name: string | null }> = {};
-    
-    if (userIds.length > 0) {
-      const { data: usersData } = await supabase
-        .from("users")
-        .select("id, full_name")
-        .in("id", userIds);
+      if (error) throw error;
+      
+      const parsedActivities: any[] = [];
+      if (recentLogs && recentLogs.length > 0) {
+        const userIds = Array.from(new Set(recentLogs.map(log => log.user_id).filter(Boolean))) as string[];
+        let usersMap: Record<string, { full_name: string | null }> = {};
         
-      if (usersData) {
-        usersMap = usersData.reduce((acc, user) => {
-          acc[user.id] = user;
-          return acc;
-        }, {} as Record<string, { full_name: string | null }>);
+        if (userIds.length > 0) {
+          const { data: usersData } = await supabase
+            .from("users")
+            .select("id, full_name")
+            .in("id", userIds);
+            
+          if (usersData) {
+            usersMap = usersData.reduce((acc, user) => {
+              acc[user.id] = user;
+              return acc;
+            }, {} as Record<string, { full_name: string | null }>);
+          }
+        }
+
+        recentLogs.forEach((log) => {
+          const user = log.user_id ? usersMap[log.user_id] : null;
+          const userName = user?.full_name || "System";
+          const initials = userName.substring(0, 2).toUpperCase();
+          
+          let avatarClass = "bg-primary";
+          let actionText = log.details;
+          let badge = log.action;
+          
+          if (log.action === "SALE") avatarClass = "bg-emerald-600";
+          else if (log.action === "DELETE") avatarClass = "bg-destructive";
+          else if (log.action === "CREATE") avatarClass = "bg-blue-600";
+          else if (log.action === "UPDATE") avatarClass = "bg-amber-600";
+          
+          parsedActivities.push({
+            id: log.id,
+            name: userName,
+            initials: initials,
+            avatarClass: avatarClass,
+            action: actionText,
+            highlight: "",
+            location: log.entity_type,
+            time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
+            badge: badge,
+          });
+        });
       }
+      return parsedActivities;
     }
+  });
 
-    recentLogs.forEach((log) => {
-      const user = log.user_id ? usersMap[log.user_id] : null;
-      const userName = user?.full_name || "System";
-      const initials = userName.substring(0, 2).toUpperCase();
-      
-      let avatarClass = "bg-primary";
-      let actionText = log.details;
-      let badge = log.action;
-      
-      if (log.action === "SALE") {
-        avatarClass = "bg-emerald-600";
-      } else if (log.action === "DELETE") {
-        avatarClass = "bg-destructive";
-      } else if (log.action === "CREATE") {
-        avatarClass = "bg-blue-600";
-      } else if (log.action === "UPDATE") {
-        avatarClass = "bg-amber-600";
-      }
-      
-      activities.push({
-        id: log.id,
-        name: userName,
-        initials: initials,
-        avatarClass: avatarClass,
-        action: actionText,
-        highlight: "",
-        location: log.entity_type,
-        time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
-        badge: badge,
-      });
-    });
-  }
+  const queryClient = useQueryClient();
 
-  // Trim to max 3 activities
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("public:audit_logs:feed")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "audit_logs",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["recent_activities"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const displayActivities = activities.slice(0, 3);
 
   return (
@@ -111,10 +136,14 @@ export async function ActivityFeed({ className }: { className?: string }) {
       </CardHeader>
 
       <CardContent className="flex-1 space-y-6 py-2">
-        {displayActivities.length === 0 && (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-4">
+            <Loader2 className="size-6 animate-spin text-muted-foreground/50" />
+          </div>
+        ) : displayActivities.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">No recent activity.</p>
-        )}
-        {displayActivities.map((a) => (
+        ) : (
+          displayActivities.map((a: any) => (
           <div key={a.id} className="flex gap-3">
             <Avatar className="size-10 shrink-0 border border-border/50 ring-1 ring-border/20">
               <AvatarFallback
@@ -158,7 +187,8 @@ export async function ActivityFeed({ className }: { className?: string }) {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </CardContent>
 
       <CardFooter className="flex border-t border-border/50 justify-center py-6">

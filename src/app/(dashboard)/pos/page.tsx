@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { useReactToPrint } from "react-to-print";
 import { Receipt } from "@/components/dashboard/receipt";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type Product = {
   id: string;
@@ -39,8 +40,6 @@ export default function PosPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [cashReceived, setCashReceived] = useState<string>("");
@@ -50,25 +49,43 @@ export default function PosPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data: products = [], isLoading, refetch } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setProducts(data);
-    } else {
-      console.error("Error fetching products:", error);
-    }
-    setIsLoading(false);
-  };
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const supabase = createClient();
+    const channel = supabase
+      .channel("public:products:pos")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "products",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
@@ -157,7 +174,7 @@ export default function PosPage() {
       clearCart();
       setIsCheckoutOpen(false);
       setCashReceived("");
-      fetchProducts(); // Refresh stock quantities
+      refetch(); // Refresh stock quantities
       
       // Auto-print receipt after a short delay to allow state update
       setTimeout(() => {
