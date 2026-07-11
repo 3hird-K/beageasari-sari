@@ -13,9 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { SalesChart } from "./components/sales-chart";
+import { TransactionActions } from "./components/transaction-actions";
 
 export default async function ReportsPage() {
   const supabase = await createClient();
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  let isAdmin = false;
+  if (user) {
+    const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).single();
+    isAdmin = userData?.role === "admin";
+  }
   
   const { data: orders, error } = await supabase
     .from("orders")
@@ -24,9 +32,14 @@ export default async function ReportsPage() {
       created_at,
       total_amount,
       status,
+      cashier_id,
       order_items ( quantity )
     `)
     .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching orders:", error);
+  }
 
   let totalRevenue = 0;
   let totalTransactions = 0;
@@ -34,6 +47,19 @@ export default async function ReportsPage() {
   let recentTransactions: any[] = [];
 
   if (orders && !error) {
+    const cashierIds = Array.from(new Set(orders.map(o => o.cashier_id).filter(Boolean)));
+    let usersData: any[] = [];
+    
+    if (cashierIds.length > 0) {
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", cashierIds);
+      usersData = users || [];
+    }
+    
+    const userMap = new Map(usersData.map(u => [u.id, u.full_name]));
+
     totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
     totalTransactions = orders.length;
     avgOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
@@ -46,6 +72,7 @@ export default async function ReportsPage() {
         rawId: order.id,
         date: format(new Date(order.created_at), "MMM dd, yyyy h:mm a"),
         customer: "Walk-in", 
+        cashier: userMap.get(order.cashier_id) || "Unknown",
         items: itemsCount,
         total: Number(order.total_amount),
         status: (order.status || "Completed").charAt(0).toUpperCase() + (order.status || "completed").slice(1)
@@ -133,15 +160,17 @@ export default async function ReportsPage() {
                 <TableHead className="w-[140px] pl-6">Transaction ID</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Customer</TableHead>
+                <TableHead>Cashier</TableHead>
                 <TableHead className="text-right">Items</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-right pr-6">Status</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {recentTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                     No transactions found.
                   </TableCell>
                 </TableRow>
@@ -153,6 +182,7 @@ export default async function ReportsPage() {
                     </TableCell>
                     <TableCell className="text-sm">{trx.date}</TableCell>
                     <TableCell>{trx.customer}</TableCell>
+                    <TableCell className="text-muted-foreground">{trx.cashier}</TableCell>
                     <TableCell className="text-right font-medium">{trx.items}</TableCell>
                     <TableCell className="text-right font-mono">₱{trx.total.toFixed(2)}</TableCell>
                     <TableCell className="text-right pr-6">
@@ -166,6 +196,9 @@ export default async function ReportsPage() {
                       >
                         {trx.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="pr-6">
+                      <TransactionActions orderId={trx.rawId} currentStatus={trx.status.toLowerCase()} isAdmin={isAdmin} />
                     </TableCell>
                   </TableRow>
                 ))

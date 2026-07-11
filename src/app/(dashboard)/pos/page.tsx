@@ -111,7 +111,7 @@ export default function PosPage() {
       clearCart();
       fetchProducts(); // Refresh stock quantities
     } else {
-      toast.error("Failed to record sale. Please try again.");
+      toast.error(result.error || "Failed to record sale. Please try again.");
     }
     
     setIsRecording(false);

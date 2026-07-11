@@ -6,6 +6,21 @@ import { revalidatePath } from "next/cache";
 export async function recordSaleAction(items: { id: string; quantity: number }[]) {
   const supabase = await createClient();
 
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || (userData?.role !== "admin" && userData?.role !== "staff")) {
+    return { success: false, error: "Only staff and admins can record sales." };
+  }
+
   let totalAmount = 0;
   const orderItemsData = [];
 
@@ -47,7 +62,7 @@ export async function recordSaleAction(items: { id: string; quantity: number }[]
     // Create the order
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .insert([{ total_amount: totalAmount }])
+      .insert([{ total_amount: totalAmount, cashier_id: user.id }])
       .select("id")
       .single();
 
