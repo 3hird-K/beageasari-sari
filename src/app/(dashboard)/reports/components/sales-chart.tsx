@@ -40,7 +40,7 @@ export function SalesChart({ orders }: { orders: any[] }) {
     });
 
     return Object.values(dataMap);
-  }, [orders, mounted]);
+  }, [orders]);
 
   if (!mounted) {
     return (

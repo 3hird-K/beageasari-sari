@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, Filter, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Filter, MoreHorizontal, Edit, Trash2, Package, DollarSign, AlertTriangle, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { addProductAction, updateProductAction, deleteProductAction } from "./actions";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -38,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { TablePagination } from "@/components/dashboard/table-pagination";
 
 type Product = {
   id: string;
@@ -53,6 +55,19 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  // Pagination State
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Columns State
+  const [columns, setColumns] = useState({
+    category: true,
+    price: true,
+    stock: true,
+    status: true,
+  });
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -183,6 +198,10 @@ export default function InventoryPage() {
     p.sku.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <div className="flex-1 space-y-4 p-6 bg-muted/10 h-full overflow-y-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -196,6 +215,55 @@ export default function InventoryPage() {
         </Button>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-sm border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{products.length}</div>
+            <p className="text-xs text-muted-foreground">Unique items in inventory</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ₱{products.reduce((acc, p) => acc + (p.price * p.stock_quantity), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-muted-foreground">Estimated inventory value</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 20).length}
+            </div>
+            <p className="text-xs text-muted-foreground">Items with 20 or less stock</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-border/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <XCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {products.filter(p => p.stock_quantity <= 0).length}
+            </div>
+            <p className="text-xs text-muted-foreground">Items needing restock</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="shadow-sm border-border/50">
         <CardHeader className="pb-3 border-b border-border/50">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -207,12 +275,45 @@ export default function InventoryPage() {
                   placeholder="Search products, SKUs..."
                   className="pl-8 bg-background"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentPage(1);
+                  }}
                 />
               </div>
-              <Button variant="outline" size="icon" className="shrink-0">
-                <Filter className="size-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="shrink-0">
+                    <Filter className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[150px]">
+                  <DropdownMenuCheckboxItem
+                    checked={columns.category}
+                    onCheckedChange={(checked) => setColumns(prev => ({ ...prev, category: checked }))}
+                  >
+                    Category
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columns.price}
+                    onCheckedChange={(checked) => setColumns(prev => ({ ...prev, price: checked }))}
+                  >
+                    Price
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columns.stock}
+                    onCheckedChange={(checked) => setColumns(prev => ({ ...prev, stock: checked }))}
+                  >
+                    Stock
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={columns.status}
+                    onCheckedChange={(checked) => setColumns(prev => ({ ...prev, status: checked }))}
+                  >
+                    Status
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
@@ -222,28 +323,28 @@ export default function InventoryPage() {
               <TableRow>
                 <TableHead className="w-[100px]">SKU</TableHead>
                 <TableHead>Product Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                {columns.category && <TableHead>Category</TableHead>}
+                {columns.price && <TableHead className="text-right">Price</TableHead>}
+                {columns.stock && <TableHead className="text-right">Stock</TableHead>}
+                {columns.status && <TableHead className="text-right">Status</TableHead>}
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={Object.values(columns).filter(Boolean).length + 3} className="h-24 text-center text-muted-foreground">
                     Loading products...
                   </TableCell>
                 </TableRow>
-              ) : filteredProducts.length === 0 ? (
+              ) : paginatedProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={Object.values(columns).filter(Boolean).length + 3} className="h-24 text-center text-muted-foreground">
                     No products found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProducts.map((item) => {
+                paginatedProducts.map((item) => {
                   const status = getStatus(item.stock_quantity);
                   return (
                     <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
@@ -251,29 +352,33 @@ export default function InventoryPage() {
                         {item.sku}
                       </TableCell>
                       <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="font-normal text-xs bg-muted text-muted-foreground hover:bg-muted">
-                          {item.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">₱{Number(item.price).toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-medium">{item.stock_quantity}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge 
-                          variant={
-                            status === "In Stock" ? "default" 
-                            : status === "Low Stock" ? "secondary" 
-                            : "outline"
-                          }
-                          className={
-                            status === "In Stock" ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20" 
-                            : status === "Low Stock" ? "bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 border-amber-500/20" 
-                            : "bg-destructive/15 text-destructive hover:bg-destructive/25 border-destructive/20"
-                          }
-                        >
-                          {status}
-                        </Badge>
-                      </TableCell>
+                      {columns.category && (
+                        <TableCell>
+                          <Badge variant="secondary" className="font-normal text-xs bg-muted text-muted-foreground hover:bg-muted">
+                            {item.category}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      {columns.price && <TableCell className="text-right font-mono">₱{Number(item.price).toFixed(2)}</TableCell>}
+                      {columns.stock && <TableCell className="text-right font-medium">{item.stock_quantity}</TableCell>}
+                      {columns.status && (
+                        <TableCell className="text-right">
+                          <Badge 
+                            variant={
+                              status === "In Stock" ? "default" 
+                              : status === "Low Stock" ? "secondary" 
+                              : "outline"
+                            }
+                            className={
+                              status === "In Stock" ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20" 
+                              : status === "Low Stock" ? "bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 border-amber-500/20" 
+                              : "bg-destructive/15 text-destructive hover:bg-destructive/25 border-destructive/20"
+                            }
+                          >
+                            {status}
+                          </Badge>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -298,6 +403,18 @@ export default function InventoryPage() {
             </TableBody>
           </Table>
         </CardContent>
+          <TablePagination
+            page={currentPage}
+            totalPages={totalPages}
+            pageSize={itemsPerPage}
+            totalItems={filteredProducts.length}
+            itemLabel="products"
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(s) => {
+              setItemsPerPage(s);
+              setCurrentPage(1);
+            }}
+          />
       </Card>
 
       {/* Add Product Modal */}

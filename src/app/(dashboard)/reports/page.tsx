@@ -1,19 +1,12 @@
 import { Download, ArrowUpRight, ArrowDownRight, Users, CreditCard, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { SalesChart } from "./components/sales-chart";
-import { TransactionActions } from "./components/transaction-actions";
+import { TransactionsTable } from "./components/transactions-table";
 
 export default async function ReportsPage() {
   const supabase = await createClient();
@@ -153,58 +146,8 @@ export default async function ReportsPage() {
           <CardTitle>Recent Transactions</CardTitle>
           <CardDescription>A list of the most recent sales.</CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/30">
-              <TableRow>
-                <TableHead className="w-[140px] pl-6">Transaction ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Cashier</TableHead>
-                <TableHead className="text-right">Items</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right pr-6">Status</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentTransactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                    No transactions found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                recentTransactions.map((trx) => (
-                  <TableRow key={trx.rawId} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="font-mono text-xs font-medium text-muted-foreground pl-6">
-                      {trx.id}
-                    </TableCell>
-                    <TableCell className="text-sm">{trx.date}</TableCell>
-                    <TableCell>{trx.customer}</TableCell>
-                    <TableCell className="text-muted-foreground">{trx.cashier}</TableCell>
-                    <TableCell className="text-right font-medium">{trx.items}</TableCell>
-                    <TableCell className="text-right font-mono">₱{trx.total.toFixed(2)}</TableCell>
-                    <TableCell className="text-right pr-6">
-                      <Badge 
-                        variant={trx.status === "Completed" ? "default" : "secondary"}
-                        className={
-                          trx.status === "Completed" 
-                            ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20" 
-                            : "bg-muted text-muted-foreground hover:bg-muted"
-                        }
-                      >
-                        {trx.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-6">
-                      <TransactionActions orderId={trx.rawId} currentStatus={trx.status.toLowerCase()} isAdmin={isAdmin} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+        <CardContent className="p-4">
+          <TransactionsTable transactions={recentTransactions} isAdmin={isAdmin} />
         </CardContent>
       </Card>
     </div>
