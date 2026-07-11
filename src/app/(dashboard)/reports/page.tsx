@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { SalesChart } from "./components/sales-chart";
 import { TransactionsTable } from "./components/transactions-table";
+import { ExportCsvButton } from "./components/export-csv-button";
 
 export default async function ReportsPage() {
   const supabase = await createClient();
@@ -80,10 +81,7 @@ export default async function ReportsPage() {
           <h2 className="text-3xl font-bold tracking-tight">Sales Reports</h2>
           <p className="text-muted-foreground">Monitor your revenue and transaction history.</p>
         </div>
-        <Button variant="outline" className="shrink-0 gap-2">
-          <Download className="size-4" />
-          Export CSV
-        </Button>
+        <ExportCsvButton transactions={recentTransactions} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -142,13 +140,7 @@ export default async function ReportsPage() {
       </div>
 
       <Card className="border-border/50 shadow-sm">
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>A list of the most recent sales.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-4">
-          <TransactionsTable transactions={recentTransactions} isAdmin={isAdmin} />
-        </CardContent>
+        <TransactionsTable transactions={recentTransactions} isAdmin={isAdmin} />
       </Card>
     </div>
   );

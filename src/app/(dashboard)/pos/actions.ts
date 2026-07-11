@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/logger";
 
 export async function recordSaleAction(items: { id: string; quantity: number }[]) {
   const supabase = await createClient();
@@ -83,6 +84,13 @@ export async function recordSaleAction(items: { id: string; quantity: number }[]
 
     if (itemsError) {
        console.error("Failed to insert order items:", itemsError);
+    } else {
+       await logActivity({
+         action: "SALE",
+         entity_type: "ORDER",
+         entity_id: order.id,
+         details: `Recorded sale of ${itemsToInsert.length} items for ₱${totalAmount.toFixed(2)}`
+       });
     }
   }
 

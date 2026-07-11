@@ -14,7 +14,8 @@ import {
   Store,
   MoreVertical,
   UserCircle,
-  Plus
+  Plus,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,6 +56,7 @@ const navItems: NavItem[] = [
   { label: "Inventory", icon: Package, href: "/inventory" },
   { label: "Sales Reports", icon: BarChart2, href: "/reports", section: "Analytics" },
   { label: "Users", icon: Users, href: "/users", section: "Administration" },
+  { label: "Audit Logs", icon: FileText, href: "/logs" },
 ];
 
 export function SidebarContent({ collapsed = false, onItemClick, user, profile }: { collapsed?: boolean; onItemClick?: () => void; user?: User; profile?: any }) {

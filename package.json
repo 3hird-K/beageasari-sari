@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "node --max-old-space-size=4096 node_modules/next/dist/bin/next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gen:types": "npx supabase gen types typescript --project-id lmdoriinyskftiffyrih --schema public > database.types.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

@@ -57,8 +57,12 @@ export function TransactionsTable({ transactions, isAdmin }: TransactionsTablePr
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end mb-4">
+    <div className="space-y-4 pt-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 pb-2 gap-4">
+        <div className="space-y-1">
+          <h3 className="font-semibold leading-none tracking-tight text-lg">Recent Transactions</h3>
+          <p className="text-sm text-muted-foreground">A list of the most recent sales.</p>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="ml-auto">
@@ -85,7 +89,7 @@ export function TransactionsTable({ transactions, isAdmin }: TransactionsTablePr
         </DropdownMenu>
       </div>
 
-      <div className="rounded-md border border-border/50">
+      <div className="px-6">
         <Table>
           <TableHeader className="bg-muted/30">
             <TableRow>
@@ -95,8 +99,8 @@ export function TransactionsTable({ transactions, isAdmin }: TransactionsTablePr
               {columns.cashier && <TableHead>Cashier</TableHead>}
               {columns.items && <TableHead className="text-right">Items</TableHead>}
               {columns.total && <TableHead className="text-right">Total</TableHead>}
-              {columns.status && <TableHead className="text-right pr-6">Status</TableHead>}
-              <TableHead className="w-[50px]"></TableHead>
+              {columns.status && <TableHead className="text-center">Status</TableHead>}
+              <TableHead className="w-[50px] pr-6"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,7 +122,7 @@ export function TransactionsTable({ transactions, isAdmin }: TransactionsTablePr
                   {columns.items && <TableCell className="text-right font-medium">{trx.items}</TableCell>}
                   {columns.total && <TableCell className="text-right font-mono">₱{trx.total.toFixed(2)}</TableCell>}
                   {columns.status && (
-                    <TableCell className="text-right pr-6">
+                    <TableCell className="text-center">
                       <Badge 
                         variant={trx.status === "Completed" ? "default" : "secondary"}
                         className={

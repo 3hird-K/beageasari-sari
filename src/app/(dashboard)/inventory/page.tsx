@@ -55,8 +55,9 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [stockStatusFilter, setStockStatusFilter] = useState("all");
 
-  // Pagination State
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -92,9 +93,11 @@ export default function InventoryPage() {
   // Dialog States
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSupplyOpen, setIsSupplyOpen] = useState(false);
   
   // Form State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [supplyQuantity, setSupplyQuantity] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -127,6 +130,12 @@ export default function InventoryPage() {
       stock: product.stock_quantity.toString(),
     });
     setIsEditOpen(true);
+  };
+
+  const openSupplyModal = (product: Product) => {
+    setEditingProduct(product);
+    setSupplyQuantity("");
+    setIsSupplyOpen(true);
   };
 
   const handleAddProduct = async () => {
@@ -183,6 +192,30 @@ export default function InventoryPage() {
     }
   };
 
+  const handleSupplyStock = async () => {
+    if (!editingProduct) return;
+    const addedStock = parseInt(supplyQuantity);
+    if (isNaN(addedStock) || addedStock <= 0) {
+      toast.error("Please enter a valid stock quantity to supply.");
+      return;
+    }
+    
+    const res = await updateProductAction(editingProduct.id, {
+      name: editingProduct.name,
+      category: editingProduct.category,
+      price: editingProduct.price,
+      stock_quantity: editingProduct.stock_quantity + addedStock,
+    });
+
+    if (res.success) {
+      setIsSupplyOpen(false);
+      toast.success(`Successfully added ${addedStock} stock to ${editingProduct.name}!`);
+      fetchProducts();
+    } else {
+      toast.error(res.error || "Failed to supply stock.");
+    }
+  };
+
   const handleDeleteProduct = async (id: string) => {
     const res = await deleteProductAction(id);
     if (res.success) {
@@ -193,10 +226,19 @@ export default function InventoryPage() {
     }
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.sku.toLowerCase().includes(search.toLowerCase())
-  );
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
+                          p.sku.toLowerCase().includes(search.toLowerCase());
+    
+    const status = getStatus(p.stock_quantity);
+    const matchesStock = stockStatusFilter === "all" || status.toLowerCase() === stockStatusFilter.toLowerCase();
+    
+    const matchesCategory = categoryFilter === "all" || p.category === categoryFilter;
+
+    return matchesSearch && matchesStock && matchesCategory;
+  });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -268,8 +310,8 @@ export default function InventoryPage() {
         <CardHeader className="pb-3 border-b border-border/50">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <CardTitle className="text-lg font-semibold">Products</CardTitle>
-            <div className="flex w-full sm:w-auto items-center gap-2">
-              <div className="relative w-full sm:w-[300px]">
+            <div className="flex w-full sm:w-auto items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div className="relative w-full sm:w-[250px]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search products, SKUs..."
@@ -281,6 +323,28 @@ export default function InventoryPage() {
                   }}
                 />
               </div>
+              <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {uniqueCategories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={stockStatusFilter} onValueChange={(v) => { setStockStatusFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="in stock">In Stock</SelectItem>
+                  <SelectItem value="low stock">Low Stock</SelectItem>
+                  <SelectItem value="out of stock">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="shrink-0">
@@ -387,6 +451,9 @@ export default function InventoryPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openSupplyModal(item)}>
+                              <Package className="mr-2 h-4 w-4 text-emerald-500" /> Supply Stock
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditModal(item)}>
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
@@ -430,19 +497,19 @@ export default function InventoryPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Groceries">Groceries</SelectItem>
-                  <SelectItem value="Snacks">Snacks</SelectItem>
-                  <SelectItem value="Condiments">Condiments</SelectItem>
-                  <SelectItem value="Drinks">Drinks</SelectItem>
-                  <SelectItem value="Essentials">Essentials</SelectItem>
-                  <SelectItem value="Others">Others</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input 
+                id="category" 
+                name="category" 
+                list="category-options" 
+                value={formData.category} 
+                onChange={handleInputChange} 
+                placeholder="Type or select a category"
+              />
+              <datalist id="category-options">
+                {uniqueCategories.map(cat => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -475,19 +542,19 @@ export default function InventoryPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger id="edit-category">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Groceries">Groceries</SelectItem>
-                  <SelectItem value="Snacks">Snacks</SelectItem>
-                  <SelectItem value="Condiments">Condiments</SelectItem>
-                  <SelectItem value="Drinks">Drinks</SelectItem>
-                  <SelectItem value="Essentials">Essentials</SelectItem>
-                  <SelectItem value="Others">Others</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input 
+                id="edit-category" 
+                name="category" 
+                list="category-options-edit" 
+                value={formData.category} 
+                onChange={handleInputChange} 
+                placeholder="Type or select a category"
+              />
+              <datalist id="category-options-edit">
+                {uniqueCategories.map(cat => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -503,6 +570,44 @@ export default function InventoryPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
             <Button onClick={handleEditProduct}>Update Product</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Supply Stock Modal */}
+      <Dialog open={isSupplyOpen} onOpenChange={setIsSupplyOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Supply Stock</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col space-y-1">
+              <span className="text-sm text-muted-foreground">Product</span>
+              <span className="font-semibold text-lg">{editingProduct?.name}</span>
+            </div>
+            <div className="flex flex-col space-y-1">
+              <span className="text-sm text-muted-foreground">Current Stock</span>
+              <span className="font-semibold">{editingProduct?.stock_quantity}</span>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="supply-quantity">Quantity to Add *</Label>
+              <Input 
+                id="supply-quantity" 
+                type="number" 
+                placeholder="e.g. 50" 
+                value={supplyQuantity} 
+                onChange={(e) => setSupplyQuantity(e.target.value)} 
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSupplyStock();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSupplyOpen(false)}>Cancel</Button>
+            <Button onClick={handleSupplyStock} className="bg-emerald-600 hover:bg-emerald-700 text-white">Add Stock</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

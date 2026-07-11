@@ -195,10 +195,10 @@ export default async function Home() {
     });
   }
 
-  // Convert to array, sort by revenue descending, take top 5
+  // Convert to array, sort by revenue descending, take top 10
   const topProductsData = Array.from(productSalesMap.values())
     .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
+    .slice(0, 10);
 
   return (
     <div className="flex-1 space-y-3 p-6 pt-6 bg-background min-h-screen text-foreground">

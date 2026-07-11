@@ -61,6 +61,7 @@ export default function PosPage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
+      if (p.stock_quantity <= 0) return false;
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
@@ -71,9 +72,17 @@ export default function PosPage() {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
+        if (existing.quantity >= product.stock_quantity) {
+          toast.error(`Cannot add more than available stock (${product.stock_quantity})`);
+          return prev;
+        }
         return prev.map((item) =>
           item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
+      }
+      if (product.stock_quantity <= 0) {
+        toast.error("Product is out of stock");
+        return prev;
       }
       return [...prev, { product, quantity: 1 }];
     });
@@ -84,6 +93,10 @@ export default function PosPage() {
       prev.map((item) => {
         if (item.product.id === id) {
           const newQ = item.quantity + delta;
+          if (delta > 0 && newQ > item.product.stock_quantity) {
+            toast.error(`Cannot add more than available stock (${item.product.stock_quantity})`);
+            return item;
+          }
           return { ...item, quantity: Math.max(0, newQ) };
         }
         return item;
@@ -166,26 +179,49 @@ export default function PosPage() {
                 {filteredProducts.map((product) => (
                   <Card 
                     key={product.id} 
-                    className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95 group border-border/50 bg-background overflow-hidden flex flex-col h-[120px]"
+                    className={cn(
+                      "group cursor-pointer border-border/40 bg-card hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-[0.98] flex flex-col h-[130px] rounded-xl overflow-hidden relative",
+                      product.stock_quantity <= 0 && "opacity-60 grayscale-[0.5]"
+                    )}
                     onClick={() => addToCart(product)}
                   >
-                    <CardContent className="p-4 flex-1 flex flex-col justify-between gap-2 h-full">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1 pr-2">
-                          <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{product.category}</p>
+                    {/* Top Accent Line */}
+                    <div className={cn("h-1 w-full absolute top-0 left-0", product.color.split(" ")[0])} />
+
+                    <CardContent className="p-3 pt-4 flex flex-col h-full justify-between gap-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="space-y-0.5 pr-1 overflow-hidden">
+                          <h3 className="font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                            {product.name}
+                          </h3>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">
+                            {product.category}
+                          </p>
                         </div>
-                        <div className={cn("size-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-bold", product.color)}>
+                        <div className={cn("size-8 rounded-lg flex flex-shrink-0 items-center justify-center text-xs font-bold shadow-sm", product.color)}>
                           {product.name.substring(0, 2).toUpperCase()}
                         </div>
                       </div>
+
                       <div className="flex items-end justify-between mt-auto">
-                        <span className="font-bold text-base">
-                          ₱{product.price.toFixed(2)}
-                        </span>
-                        <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Plus className="size-3 mr-0.5" /> Add
-                        </Badge>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-base tracking-tight">
+                            ₱{product.price.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "text-[10px] font-medium px-1.5 py-0.5 rounded-md", 
+                            product.stock_quantity > 10 ? "text-muted-foreground bg-muted" : 
+                            product.stock_quantity > 0 ? "text-amber-500 bg-amber-500/10" : 
+                            "text-destructive bg-destructive/10"
+                          )}>
+                            {product.stock_quantity > 0 ? `${product.stock_quantity} left` : "Out"}
+                          </span>
+                          <div className="size-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-sm">
+                            <Plus className="size-3" strokeWidth={3} />
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

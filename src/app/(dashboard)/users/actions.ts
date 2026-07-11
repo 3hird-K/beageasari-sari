@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { logActivity } from "@/lib/logger";
 
 async function verifyAdminRole() {
   const supabase = await createClient();
@@ -55,6 +56,13 @@ export async function updateUserAction(id: string, fullName: string, role: strin
     return { success: false, error: updateError.message };
   }
 
+  await logActivity({
+    action: "UPDATE",
+    entity_type: "USER",
+    entity_id: id,
+    details: `Updated user ${fullName}'s role to ${role}`
+  });
+
   revalidatePath("/users");
   return { success: true };
 }
@@ -87,6 +95,13 @@ export async function deleteUserAction(id: string) {
   if (error) {
     return { success: false, error: error.message };
   }
+
+  await logActivity({
+    action: "DELETE",
+    entity_type: "USER",
+    entity_id: id,
+    details: `Deleted user with ID ${id}`
+  });
 
   revalidatePath("/users");
   return { success: true };

@@ -18,62 +18,71 @@ import Link from "next/link";
 export async function ActivityFeed({ className }: { className?: string }) {
   const supabase = await createClient();
 
-  // Fetch recent orders
-  const { data: recentOrders } = await supabase
-    .from("orders")
+  // Fetch recent audit logs
+  const { data: recentLogs } = await supabase
+    .from("audit_logs")
     .select(`
       id,
-      total_amount,
+      action,
+      entity_type,
+      details,
       created_at,
-      status,
-      cashier_id,
-      users ( full_name )
+      user_id
     `)
     .order("created_at", { ascending: false })
     .limit(4);
 
-  // Fetch low stock items for system alerts
-  const { data: lowStock } = await supabase
-    .from("products")
-    .select("name, stock_quantity")
-    .lte("stock_quantity", 10)
-    .order("stock_quantity", { ascending: true })
-    .limit(1);
+  const activities: any[] = [];
 
-  const activities = [];
+  // Add recent logs
+  if (recentLogs && recentLogs.length > 0) {
+    // Fetch users for the logs
+    const userIds = Array.from(new Set(recentLogs.map(log => log.user_id).filter(Boolean))) as string[];
+    let usersMap: Record<string, { full_name: string | null }> = {};
+    
+    if (userIds.length > 0) {
+      const { data: usersData } = await supabase
+        .from("users")
+        .select("id, full_name")
+        .in("id", userIds);
+        
+      if (usersData) {
+        usersMap = usersData.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as Record<string, { full_name: string | null }>);
+      }
+    }
 
-  // Add low stock alert if any
-  if (lowStock && lowStock.length > 0) {
-    activities.push({
-      id: `sys-${lowStock[0].name}`,
-      name: "System Inventory",
-      initials: "SYS",
-      avatarClass: "bg-amber-600",
-      action: "Stock alert triggered — quantity fell below minimum for",
-      highlight: `${lowStock[0].name} (${lowStock[0].stock_quantity} units left)`,
-      location: "System Alert",
-      time: "Just now",
-      badge: "Low Stock",
-    });
-  }
-
-  // Add recent orders
-  if (recentOrders) {
-    recentOrders.forEach((order) => {
-      // @ts-ignore
-      const cashierName = order.users?.full_name || "Unknown";
-      const initials = cashierName.substring(0, 2).toUpperCase();
+    recentLogs.forEach((log) => {
+      const user = log.user_id ? usersMap[log.user_id] : null;
+      const userName = user?.full_name || "System";
+      const initials = userName.substring(0, 2).toUpperCase();
+      
+      let avatarClass = "bg-primary";
+      let actionText = log.details;
+      let badge = log.action;
+      
+      if (log.action === "SALE") {
+        avatarClass = "bg-emerald-600";
+      } else if (log.action === "DELETE") {
+        avatarClass = "bg-destructive";
+      } else if (log.action === "CREATE") {
+        avatarClass = "bg-blue-600";
+      } else if (log.action === "UPDATE") {
+        avatarClass = "bg-amber-600";
+      }
       
       activities.push({
-        id: order.id,
-        name: `Cashier: ${cashierName}`,
+        id: log.id,
+        name: userName,
         initials: initials,
-        avatarClass: "bg-emerald-600",
-        action: `Completed sale — ₱${Number(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} for`,
-        highlight: `Order #TXN-${order.id.substring(0, 5).toUpperCase()}`,
-        location: "Counter",
-        time: formatDistanceToNow(new Date(order.created_at), { addSuffix: true }),
-        badge: order.status === "completed" ? "Completed" : "Pending",
+        avatarClass: avatarClass,
+        action: actionText,
+        highlight: "",
+        location: log.entity_type,
+        time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
+        badge: badge,
       });
     });
   }
@@ -97,7 +106,7 @@ export async function ActivityFeed({ className }: { className?: string }) {
           className="h-auto p-0 text-[10px] font-black uppercase tracking-[0.2em] text-primary transition-opacity hover:opacity-80"
           asChild
         >
-          <Link href="/reports">View All</Link>
+          <Link href="/logs">View All</Link>
         </Button>
       </CardHeader>
 
@@ -158,9 +167,9 @@ export async function ActivityFeed({ className }: { className?: string }) {
           className="group flex h-auto p-0 text-xs font-bold text-muted-foreground/40 hover:text-foreground transition-all"
           asChild
         >
-          <Link href="/reports" className="flex items-center justify-center">
+          <Link href="/logs" className="flex items-center justify-center">
             <ArrowUpRight className="mr-2 size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            Open Transaction Logs
+            Open Audit Logs
           </Link>
         </Button>
       </CardFooter>
