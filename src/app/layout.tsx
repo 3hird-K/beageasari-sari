@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import QueryProvider from "@/providers/query-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -60,8 +61,10 @@ export default function RootLayout({
           storageKey="beagea-theme"
           disableTransitionOnChange
         >
-          {children}
-          <Toaster position="top-center" expand={true} richColors />
+          <QueryProvider>
+            {children}
+            <Toaster position="top-center" expand={true} richColors />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

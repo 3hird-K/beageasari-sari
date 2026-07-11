@@ -11,18 +11,18 @@ import { cn } from "@/lib/utils";
 const CATEGORIES = ["All", "Groceries", "Snacks", "Drinks", "Condiments", "Essentials"];
 
 const PRODUCTS = [
-  { id: "1", name: "Pancit Canton", category: "Groceries", price: 18.00, image: "🍜", color: "bg-orange-500/10 text-orange-600" },
-  { id: "2", name: "Corned Beef", category: "Groceries", price: 45.00, image: "🥫", color: "bg-red-500/10 text-red-600" },
-  { id: "3", name: "Sardines", category: "Groceries", price: 22.00, image: "🐟", color: "bg-blue-500/10 text-blue-600" },
-  { id: "4", name: "Chicharon", category: "Snacks", price: 35.00, image: "🥓", color: "bg-amber-500/10 text-amber-600" },
-  { id: "5", name: "SkyFlakes", category: "Snacks", price: 6.50, image: "🍘", color: "bg-yellow-500/10 text-yellow-600" },
-  { id: "6", name: "Boy Bawang", category: "Snacks", price: 15.00, image: "🧄", color: "bg-slate-500/10 text-slate-600" },
-  { id: "7", name: "Soy Sauce", category: "Condiments", price: 20.00, image: "🫙", color: "bg-zinc-500/10 text-zinc-600" },
-  { id: "8", name: "Banana Ketchup", category: "Condiments", price: 30.00, image: "🍅", color: "bg-red-500/10 text-red-600" },
-  { id: "9", name: "3-in-1 Coffee", category: "Drinks", price: 12.00, image: "☕", color: "bg-amber-700/10 text-amber-800" },
-  { id: "10", name: "Coke Kasalo", category: "Drinks", price: 40.00, image: "🥤", color: "bg-rose-500/10 text-rose-600" },
-  { id: "11", name: "Bigas (1kg)", category: "Essentials", price: 55.00, image: "🍚", color: "bg-slate-500/10 text-slate-600" },
-  { id: "12", name: "Eggs (1 doz)", category: "Essentials", price: 100.00, image: "🥚", color: "bg-yellow-500/10 text-yellow-600" },
+  { id: "1", name: "Pancit Canton", category: "Groceries", price: 18.00, color: "bg-orange-500/10 text-orange-600" },
+  { id: "2", name: "Corned Beef", category: "Groceries", price: 45.00, color: "bg-red-500/10 text-red-600" },
+  { id: "3", name: "Sardines", category: "Groceries", price: 22.00, color: "bg-blue-500/10 text-blue-600" },
+  { id: "4", name: "Chicharon", category: "Snacks", price: 35.00, color: "bg-amber-500/10 text-amber-600" },
+  { id: "5", name: "SkyFlakes", category: "Snacks", price: 6.50, color: "bg-yellow-500/10 text-yellow-600" },
+  { id: "6", name: "Boy Bawang", category: "Snacks", price: 15.00, color: "bg-slate-500/10 text-slate-600" },
+  { id: "7", name: "Soy Sauce", category: "Condiments", price: 20.00, color: "bg-zinc-500/10 text-zinc-600" },
+  { id: "8", name: "Banana Ketchup", category: "Condiments", price: 30.00, color: "bg-red-500/10 text-red-600" },
+  { id: "9", name: "3-in-1 Coffee", category: "Drinks", price: 12.00, color: "bg-amber-700/10 text-amber-800" },
+  { id: "10", name: "Coke Kasalo", category: "Drinks", price: 40.00, color: "bg-rose-500/10 text-rose-600" },
+  { id: "11", name: "Bigas (1kg)", category: "Essentials", price: 55.00, color: "bg-slate-500/10 text-slate-600" },
+  { id: "12", name: "Eggs (1 doz)", category: "Essentials", price: 100.00, color: "bg-yellow-500/10 text-yellow-600" },
 ];
 
 type CartItem = {
@@ -115,21 +115,21 @@ export default function PosPage() {
             {filteredProducts.map((product) => (
               <Card 
                 key={product.id} 
-                className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95 group border-border/50 bg-background overflow-hidden flex flex-col h-full"
+                className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95 group border-border/50 bg-background overflow-hidden flex flex-col h-[120px]"
                 onClick={() => addToCart(product)}
               >
-                <div className={cn("aspect-square flex items-center justify-center text-5xl transition-colors", product.color)}>
-                  <div className="group-hover:scale-110 transition-transform duration-300">
-                    {product.image}
+                <CardContent className="p-4 flex-1 flex flex-col justify-between gap-2 h-full">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1 pr-2">
+                      <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{product.category}</p>
+                    </div>
+                    <div className={cn("size-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-bold", product.color)}>
+                      {product.name.substring(0, 2).toUpperCase()}
+                    </div>
                   </div>
-                </div>
-                <CardContent className="p-3 flex-1 flex flex-col justify-between gap-2">
-                  <div>
-                    <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors">{product.name}</h3>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{product.category}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm">
+                  <div className="flex items-end justify-between mt-auto">
+                    <span className="font-bold text-base">
                       ₱{product.price.toFixed(2)}
                     </span>
                     <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
@@ -170,8 +170,8 @@ export default function PosPage() {
           ) : (
             cart.map((item) => (
               <div key={item.product.id} className="flex items-center gap-3 bg-muted/30 p-2.5 rounded-xl border border-border/50 group hover:border-border transition-colors">
-                <div className={cn("size-10 rounded-lg flex items-center justify-center text-xl shrink-0", item.product.color)}>
-                  {item.product.image}
+                <div className={cn("size-10 rounded-lg flex items-center justify-center text-sm font-bold shrink-0", item.product.color)}>
+                  {item.product.name.substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-sm truncate">{item.product.name}</h4>

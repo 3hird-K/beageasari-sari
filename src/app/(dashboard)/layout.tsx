@@ -14,5 +14,12 @@ export default async function DashboardGroupLayout({
     redirect("/sign-in");
   }
 
-  return <AppShell user={user}>{children}</AppShell>;
+  // Fetch the extended profile from our new public.users table
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  return <AppShell user={user} profile={profile}>{children}</AppShell>;
 }

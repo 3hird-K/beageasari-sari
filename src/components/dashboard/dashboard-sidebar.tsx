@@ -12,11 +12,33 @@ import {
   HelpCircle,
   LogOut,
   Store,
+  MoreVertical,
+  UserCircle,
+  Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -35,10 +57,14 @@ const navItems: NavItem[] = [
   { label: "Users", icon: Users, href: "/users", section: "Administration" },
 ];
 
-export function SidebarContent({ collapsed = false, onItemClick, user }: { collapsed?: boolean; onItemClick?: () => void; user?: User }) {
+export function SidebarContent({ collapsed = false, onItemClick, user, profile }: { collapsed?: boolean; onItemClick?: () => void; user?: User; profile?: any }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -50,8 +76,66 @@ export function SidebarContent({ collapsed = false, onItemClick, user }: { colla
     router.push("/sign-in");
   };
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
-  const avatarUrl = user?.user_metadata?.avatar_url;
+  const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const formData = new FormData(e.currentTarget);
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    const supabase = createClient();
+    if (user?.id) {
+      const { error } = await supabase.from('users').update({ full_name: fullName }).eq('id', user.id);
+      if (!error) {
+        setIsDialogOpen(false);
+        router.refresh();
+      } else {
+        console.error("Failed to update profile", error);
+      }
+    }
+    setIsSaving(false);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    setIsUploading(true);
+    const supabase = createClient();
+    
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      router.refresh();
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
+  const roleName = profile?.role || "staff";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
@@ -218,49 +302,149 @@ export function SidebarContent({ collapsed = false, onItemClick, user }: { colla
         </div>
 
         {/* ── User card ── */}
-        <div
-          className={cn(
-            "flex items-center rounded-lg bg-muted/50 p-2.5 transition-colors hover:bg-muted",
-            collapsed ? "flex-col gap-2" : "gap-3",
-          )}
-        >
-          <div className="relative">
-            <Avatar className="size-8 shrink-0 border border-border">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
-              <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-[9px] font-bold text-white">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-emerald-500" />
-          </div>
-          {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[12px] font-semibold text-foreground leading-tight">
-                  {displayName}
-                </p>
-                <p className="truncate text-[10px] text-primary">
-                  {user?.email || "user@beagea.com"}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={handleSignOut}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div
+                role="button"
+                className={cn(
+                  "flex items-center rounded-lg bg-muted/50 p-2.5 transition-colors hover:bg-muted cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+                  collapsed ? "flex-col gap-2" : "gap-3",
+                )}
               >
-                <LogOut className="size-3.5" />
-                <span className="sr-only">Sign out</span>
-              </Button>
-            </>
-          )}
-        </div>
+                <div className="relative">
+                  <Avatar className="size-8 shrink-0 border border-border">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+                    <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-[9px] font-bold text-white">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-emerald-500" />
+                </div>
+                {!collapsed && (
+                  <>
+                    <div className="min-w-0 flex-1 text-left">
+                      <p className="truncate text-[12px] font-extrabold text-foreground uppercase tracking-widest leading-tight">
+                        {displayName}
+                      </p>
+                      <p className="truncate text-[10px] text-primary uppercase font-bold tracking-widest mt-0.5">
+                        {roleName}
+                      </p>
+                    </div>
+                    <MoreVertical className="size-4 shrink-0 text-muted-foreground" />
+                  </>
+                )}
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[260px] rounded-xl bg-popover border-border shadow-md p-1.5" align="center" side="right" sideOffset={16}>
+              <DropdownMenuLabel className="flex items-center gap-3 p-2">
+                <Avatar className="size-10 border border-border shrink-0">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-semibold truncate text-foreground">{displayName}</span>
+                  <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuGroup className="p-1">
+                <DropdownMenuItem 
+                  className="cursor-pointer gap-3 text-primary focus:text-primary focus:bg-primary/10 py-2.5 px-3 rounded-md transition-colors"
+                  onSelect={(e) => { e.preventDefault(); setIsDialogOpen(true); }}
+                >
+                  <UserCircle className="size-4 shrink-0" />
+                  <span className="font-medium">Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="cursor-pointer gap-3 text-destructive focus:text-destructive focus:bg-destructive/10 py-2.5 px-3 rounded-md transition-colors mt-0.5"
+                  onSelect={handleSignOut}
+                >
+                  <LogOut className="size-4 shrink-0" />
+                  <span className="font-medium">Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DialogContent className="sm:max-w-[400px] bg-popover border-border p-0 gap-0 shadow-lg rounded-xl overflow-hidden">
+            <form onSubmit={handleUpdateProfile}>
+              <DialogHeader className="p-6 pb-4 gap-1.5 text-left border-b border-border">
+                <DialogTitle className="text-lg font-semibold text-foreground">Edit Profile</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  Update your personal information and profile picture.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center p-6 pt-4 gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <div 
+                    className={cn(
+                      "relative group cursor-pointer hover:opacity-90 transition-opacity",
+                      isUploading ? "pointer-events-none opacity-50" : ""
+                    )}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Avatar className="size-20 border border-border">
+                      {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-xl font-bold text-white">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0 rounded-full bg-primary p-1 text-primary-foreground shadow-sm ring-2 ring-background">
+                      <Plus className="size-3.5" strokeWidth={3} />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground font-medium">
+                    {isUploading ? "Uploading..." : "Click photo to change"}
+                  </p>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleAvatarUpload} 
+                  />
+                </div>
+                
+                <div className="grid w-full gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="firstName" className="text-xs font-semibold text-foreground">First Name</Label>
+                    <Input 
+                      id="firstName"
+                      name="firstName"
+                      defaultValue={displayName.split(' ')[0] || ''} 
+                      className="bg-background border-input focus-visible:ring-primary focus-visible:border-primary h-10 px-3 text-sm rounded-md transition-all" 
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="lastName" className="text-xs font-semibold text-foreground">Last Name</Label>
+                    <Input 
+                      id="lastName" 
+                      name="lastName"
+                      defaultValue={displayName.split(' ').slice(1).join(' ') || ''} 
+                      className="bg-background border-input focus-visible:ring-primary focus-visible:border-primary h-10 px-3 text-sm rounded-md transition-all" 
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter className="p-6 pt-0 sm:justify-end">
+                <Button type="submit" disabled={isSaving} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10 rounded-md transition-all">
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 }
 
-export function DashboardSidebar({ collapsed, user }: { collapsed: boolean; user: User }) {
+export function DashboardSidebar({ collapsed, user, profile }: { collapsed: boolean; user: User; profile: any }) {
   return (
     <aside
       className={cn(
@@ -268,7 +452,7 @@ export function DashboardSidebar({ collapsed, user }: { collapsed: boolean; user
         collapsed ? "w-[60px] px-1.5" : "w-[16%] min-w-[250px] px-5",
       )}
     >
-      <SidebarContent collapsed={collapsed} user={user} />
+      <SidebarContent collapsed={collapsed} user={user} profile={profile} />
     </aside>
   );
 }
