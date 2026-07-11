@@ -93,9 +93,7 @@ export default function PosPage() {
 
   const clearCart = () => setCart([]);
 
-  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const tax = subtotal * 0.08; // 8% mock tax
-  const total = subtotal + tax;
+  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   const handleRecordSale = async () => {
     if (cart.length === 0) return;
@@ -261,15 +259,7 @@ export default function PosPage() {
 
         <div className="p-4 bg-muted/10 border-t border-border/50 space-y-4 shrink-0">
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between text-muted-foreground">
-              <span>Subtotal</span>
-              <span className="font-mono">₱{subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-muted-foreground">
-              <span>Tax (8%)</span>
-              <span className="font-mono">₱{tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg pt-2 border-t border-border/50">
+            <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
               <span className="font-mono text-primary">₱{total.toFixed(2)}</span>
             </div>
@@ -278,7 +268,7 @@ export default function PosPage() {
           <div className="grid grid-cols-2 gap-2">
             <Button 
               variant="outline" 
-              className="h-12 border-destructive text-destructive hover:bg-destructive/10"
+              className="border-destructive text-destructive hover:bg-destructive/10"
               onClick={clearCart}
               disabled={cart.length === 0 || isRecording}
             >
@@ -286,7 +276,6 @@ export default function PosPage() {
               Clear
             </Button>
             <Button 
-              className="h-12"
               disabled={cart.length === 0 || isRecording}
               onClick={handleRecordSale}
             >
