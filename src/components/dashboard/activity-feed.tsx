@@ -116,7 +116,7 @@ export async function ActivityFeed({ className }: { className?: string }) {
         )}
         {displayActivities.map((a) => (
           <div key={a.id} className="flex gap-3">
-            <Avatar className="size-10 shrink-0 border border-white/5 ring-1 ring-white/5">
+            <Avatar className="size-10 shrink-0 border border-border/50 ring-1 ring-border/20">
               <AvatarFallback
                 className={cn(
                   "text-[12px] font-bold text-white",
@@ -128,7 +128,7 @@ export async function ActivityFeed({ className }: { className?: string }) {
             </Avatar>
             <div className="flex-1 min-w-0 space-y-0.5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-white truncate">
+                <p className="text-sm font-bold text-foreground truncate">
                   {a.name}
                 </p>
                 <span className="text-[10px] font-medium text-muted-foreground/30 shrink-0 ml-4">
@@ -142,7 +142,7 @@ export async function ActivityFeed({ className }: { className?: string }) {
                 </span>
               </p>
               <div className="flex flex-wrap gap-2 pt-1.5">
-                <span className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted-foreground/60">
+                <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted-foreground/60">
                   {a.location}
                 </span>
                 {a.badge && (
