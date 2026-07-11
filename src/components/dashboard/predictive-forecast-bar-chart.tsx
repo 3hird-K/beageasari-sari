@@ -55,12 +55,13 @@ function BarTooltip({
   );
 }
 
-export function PredictiveForecastBarChart() {
+export function PredictiveForecastBarChart({ data }: { data?: any[] }) {
+  const displayData = data && data.length > 0 ? data : SENSOR_WEEKLY_CHART_ROWS;
   return (
     <div className="h-[300px] w-full md:h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={SENSOR_WEEKLY_CHART_ROWS}
+          data={displayData}
           margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
           barGap={2}
           barCategoryGap="18%"

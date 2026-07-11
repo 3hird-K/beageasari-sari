@@ -2,15 +2,12 @@
 
 import { VACCINE_STOCK_DATA } from "@/data/forecast-advanced";
 
-/**
- * Stock Level vs. Reorder Threshold gauge.
- * Shows each category's projected weekly demand against current stock,
- * helping managers flag products approaching reorder point.
- */
-export function VaccineStockGauge() {
+export function VaccineStockGauge({ data }: { data?: any[] }) {
+  const displayData = data && data.length > 0 ? data : VACCINE_STOCK_DATA;
+
   return (
     <div className="w-full space-y-5">
-      {VACCINE_STOCK_DATA.map((row) => {
+      {displayData.map((row) => {
         const pct = Math.min(
           100,
           Math.round((row.forecastDoses / row.currentStock) * 100),

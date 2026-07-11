@@ -71,13 +71,14 @@ function ChartTooltip({
   );
 }
 
-export function ServiceImpactChart() {
+export function ServiceImpactChart({ data }: { data?: ChartRow[] }) {
+  const displayData = data && data.length > 0 ? data : chartData;
   return (
     <div className="space-y-4">
       <div className="h-[280px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={chartData}
+            data={displayData}
             margin={{ top: 8, right: 12, left: -8, bottom: 4 }}
           >
             <defs>

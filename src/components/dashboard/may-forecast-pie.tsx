@@ -30,15 +30,15 @@ function PieTooltip({
   );
 }
 
-export function MayForecastPie() {
-  const data = getActuatorUsageMix();
+export function MayForecastPie({ data }: { data?: any[] }) {
+  const displayData = data && data.length > 0 ? data : getActuatorUsageMix();
 
   return (
     <div className="flex h-[300px] w-full flex-col md:h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <Pie
-            data={data}
+            data={displayData}
             dataKey="value"
             nameKey="name"
             cx="50%"
@@ -49,7 +49,7 @@ export function MayForecastPie() {
             stroke="var(--background)"
             strokeWidth={2}
           >
-            {data.map((entry) => (
+            {displayData.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
             ))}
           </Pie>
@@ -57,7 +57,7 @@ export function MayForecastPie() {
         </PieChart>
       </ResponsiveContainer>
       <div className="-mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {data.map((d) => (
+        {displayData.map((d) => (
           <span key={d.name} className="inline-flex items-center gap-1.5">
             <span className="size-2 rounded-full" style={{ background: d.fill }} />
             {d.name}{" "}

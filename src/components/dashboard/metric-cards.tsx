@@ -6,51 +6,78 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
 
-const metrics = [
-  {
-    title: "Today's Sales",
-    value: "₱48,250",
-    icon: ShoppingBag,
-    gradient: "from-rose-500/5",
-    iconClass: "text-rose-400",
-    badge: "+12.4%",
-    badgeClass: "text-emerald-400 bg-emerald-400/10",
-    sub: "vs. yesterday ₱42,940",
-  },
-  {
-    title: "Transactions",
-    value: "134",
-    icon: TrendingUp,
-    gradient: "from-sky-500/5",
-    iconClass: "text-sky-400",
-    badge: "Active",
-    badgeClass: "text-emerald-400 bg-emerald-400/10",
-    sub: "Avg. ticket: ₱360",
-  },
-  {
-    title: "Low Stock Items",
-    value: "7",
-    icon: AlertTriangle,
-    gradient: "from-amber-500/5",
-    iconClass: "text-amber-400",
-    badge: "Needs Reorder",
-    badgeClass: "text-amber-400 bg-amber-400/10",
-    sub: "Below minimum threshold",
-  },
-  {
-    title: "Total SKUs",
-    value: "1,248",
-    icon: Package,
-    gradient: "from-emerald-500/5",
-    iconClass: "text-emerald-400",
-    badge: "In Stock",
-    badgeClass: "text-emerald-400 bg-emerald-400/10",
-    sub: "Across 18 categories",
-  },
-] as const;
+export async function MetricCards() {
+  const supabase = await createClient();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-export function MetricCards() {
+  // Run all queries in parallel
+  const [
+    { data: todayOrders },
+    { count: lowStockCount },
+    { count: totalSkuCount }
+  ] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('total_amount')
+      .gte('created_at', today.toISOString()),
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .lte('stock_quantity', 10),
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+  ]);
+
+  const salesToday = todayOrders?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
+  const transactionCount = todayOrders?.length || 0;
+
+  const metrics = [
+    {
+      title: "Today's Sales",
+      value: `₱${salesToday.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: ShoppingBag,
+      gradient: "from-rose-500/5",
+      iconClass: "text-rose-400",
+      badge: "Live",
+      badgeClass: "text-emerald-400 bg-emerald-400/10",
+      sub: "Revenue today",
+    },
+    {
+      title: "Transactions",
+      value: transactionCount.toString(),
+      icon: TrendingUp,
+      gradient: "from-sky-500/5",
+      iconClass: "text-sky-400",
+      badge: "Today",
+      badgeClass: "text-emerald-400 bg-emerald-400/10",
+      sub: `Avg: ₱${transactionCount > 0 ? (salesToday / transactionCount).toFixed(2) : '0.00'}`,
+    },
+    {
+      title: "Low Stock Items",
+      value: (lowStockCount || 0).toString(),
+      icon: AlertTriangle,
+      gradient: "from-amber-500/5",
+      iconClass: "text-amber-400",
+      badge: "Needs Reorder",
+      badgeClass: "text-amber-400 bg-amber-400/10",
+      sub: "10 or fewer in stock",
+    },
+    {
+      title: "Total SKUs",
+      value: (totalSkuCount || 0).toString(),
+      icon: Package,
+      gradient: "from-emerald-500/5",
+      iconClass: "text-emerald-400",
+      badge: "In Stock",
+      badgeClass: "text-emerald-400 bg-emerald-400/10",
+      sub: "Active products",
+    },
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-4">
       {metrics.map((m) => (
