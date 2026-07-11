@@ -1,32 +1,28 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Banknote, LayoutGrid } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Banknote, LayoutGrid, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { recordSaleAction } from "./actions";
+import { toast } from "sonner";
 
-const CATEGORIES = ["All", "Groceries", "Snacks", "Drinks", "Condiments", "Essentials"];
-
-const PRODUCTS = [
-  { id: "1", name: "Pancit Canton", category: "Groceries", price: 18.00, color: "bg-orange-500/10 text-orange-600" },
-  { id: "2", name: "Corned Beef", category: "Groceries", price: 45.00, color: "bg-red-500/10 text-red-600" },
-  { id: "3", name: "Sardines", category: "Groceries", price: 22.00, color: "bg-blue-500/10 text-blue-600" },
-  { id: "4", name: "Chicharon", category: "Snacks", price: 35.00, color: "bg-amber-500/10 text-amber-600" },
-  { id: "5", name: "SkyFlakes", category: "Snacks", price: 6.50, color: "bg-yellow-500/10 text-yellow-600" },
-  { id: "6", name: "Boy Bawang", category: "Snacks", price: 15.00, color: "bg-slate-500/10 text-slate-600" },
-  { id: "7", name: "Soy Sauce", category: "Condiments", price: 20.00, color: "bg-zinc-500/10 text-zinc-600" },
-  { id: "8", name: "Banana Ketchup", category: "Condiments", price: 30.00, color: "bg-red-500/10 text-red-600" },
-  { id: "9", name: "3-in-1 Coffee", category: "Drinks", price: 12.00, color: "bg-amber-700/10 text-amber-800" },
-  { id: "10", name: "Coke Kasalo", category: "Drinks", price: 40.00, color: "bg-rose-500/10 text-rose-600" },
-  { id: "11", name: "Bigas (1kg)", category: "Essentials", price: 55.00, color: "bg-slate-500/10 text-slate-600" },
-  { id: "12", name: "Eggs (1 doz)", category: "Essentials", price: 100.00, color: "bg-yellow-500/10 text-yellow-600" },
-];
+type Product = {
+  id: string;
+  name: string;
+  category: string;
+  sku: string;
+  stock_quantity: number;
+  price: number;
+  color: string;
+};
 
 type CartItem = {
-  product: typeof PRODUCTS[0];
+  product: Product;
   quantity: number;
 };
 
@@ -34,16 +30,44 @@ export default function PosPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setProducts(data);
+    } else {
+      console.error("Error fetching products:", error);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
+    return ["All", ...uniqueCategories];
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => {
+    return products.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [search, selectedCategory]);
+  }, [search, selectedCategory, products]);
 
-  const addToCart = (product: typeof PRODUCTS[0]) => {
+  const addToCart = (product: Product) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
@@ -73,6 +97,28 @@ export default function PosPage() {
   const tax = subtotal * 0.08; // 8% mock tax
   const total = subtotal + tax;
 
+  const handleRecordSale = async () => {
+    if (cart.length === 0) return;
+    setIsRecording(true);
+    
+    const items = cart.map(item => ({
+      id: item.product.id,
+      quantity: item.quantity
+    }));
+
+    const result = await recordSaleAction(items);
+    
+    if (result.success) {
+      toast.success("Sale recorded successfully!");
+      clearCart();
+      fetchProducts(); // Refresh stock quantities
+    } else {
+      toast.error("Failed to record sale. Please try again.");
+    }
+    
+    setIsRecording(false);
+  };
+
   return (
     <div className="flex h-full flex-col lg:flex-row overflow-hidden bg-muted/10">
       {/* Left Panel: Products */}
@@ -91,7 +137,7 @@ export default function PosPage() {
           </div>
           
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Button
                 key={cat}
                 variant={selectedCategory === cat ? "default" : "outline"}
@@ -111,40 +157,49 @@ export default function PosPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 bg-muted/20 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredProducts.map((product) => (
-              <Card 
-                key={product.id} 
-                className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95 group border-border/50 bg-background overflow-hidden flex flex-col h-[120px]"
-                onClick={() => addToCart(product)}
-              >
-                <CardContent className="p-4 flex-1 flex flex-col justify-between gap-2 h-full">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1 pr-2">
-                      <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{product.category}</p>
-                    </div>
-                    <div className={cn("size-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-bold", product.color)}>
-                      {product.name.substring(0, 2).toUpperCase()}
-                    </div>
-                  </div>
-                  <div className="flex items-end justify-between mt-auto">
-                    <span className="font-bold text-base">
-                      ₱{product.price.toFixed(2)}
-                    </span>
-                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Plus className="size-3 mr-0.5" /> Add
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          {filteredProducts.length === 0 && (
+          {isLoading ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-              <LayoutGrid className="size-12 mb-4 opacity-20" />
-              <p>No products found in this category.</p>
+              <LayoutGrid className="size-12 mb-4 animate-pulse opacity-20" />
+              <p>Loading products...</p>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredProducts.map((product) => (
+                  <Card 
+                    key={product.id} 
+                    className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all duration-200 active:scale-95 group border-border/50 bg-background overflow-hidden flex flex-col h-[120px]"
+                    onClick={() => addToCart(product)}
+                  >
+                    <CardContent className="p-4 flex-1 flex flex-col justify-between gap-2 h-full">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1 pr-2">
+                          <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{product.category}</p>
+                        </div>
+                        <div className={cn("size-8 rounded-full flex flex-shrink-0 items-center justify-center text-xs font-bold", product.color)}>
+                          {product.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      </div>
+                      <div className="flex items-end justify-between mt-auto">
+                        <span className="font-bold text-base">
+                          ₱{product.price.toFixed(2)}
+                        </span>
+                        <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Plus className="size-3 mr-0.5" /> Add
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {filteredProducts.length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground mt-12">
+                  <LayoutGrid className="size-12 mb-4 opacity-20" />
+                  <p>No products found in this category.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -225,17 +280,22 @@ export default function PosPage() {
               variant="outline" 
               className="h-12 border-destructive text-destructive hover:bg-destructive/10"
               onClick={clearCart}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || isRecording}
             >
               <Trash2 className="mr-2 size-4" />
               Clear
             </Button>
             <Button 
               className="h-12"
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || isRecording}
+              onClick={handleRecordSale}
             >
-              <Banknote className="mr-2 size-4" />
-              Record
+              {isRecording ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Banknote className="mr-2 size-4" />
+              )}
+              {isRecording ? "Recording..." : "Record"}
             </Button>
           </div>
         </div>
