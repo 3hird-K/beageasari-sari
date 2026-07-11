@@ -30,7 +30,7 @@ export async function ActivityFeed({ className }: { className?: string }) {
       user_id
     `)
     .order("created_at", { ascending: false })
-    .limit(4);
+    .limit(3);
 
   const activities: any[] = [];
 

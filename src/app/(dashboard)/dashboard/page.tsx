@@ -110,10 +110,9 @@ export default async function Home() {
         }
       });
 
-      // @ts-ignore
-      order.order_items?.forEach(item => {
-        // @ts-ignore
-        let cat = (item.products?.category || "other").toLowerCase();
+      order.order_items?.forEach((item: any) => {
+        const prod = Array.isArray(item.products) ? item.products[0] : item.products;
+        let cat = (prod?.category || "other").toLowerCase();
         if (cat !== "beverages" && cat !== "snacks" && cat !== "essentials") {
           // Map unknown categories to essentials or snacks arbitrarily to fill the chart
           if (cat.includes("drink")) cat = "beverages";
@@ -172,10 +171,8 @@ export default async function Home() {
   const productSalesMap = new Map();
   if (recentOrders) {
     recentOrders.forEach(order => {
-      // @ts-ignore
-      order.order_items?.forEach(item => {
-        // @ts-ignore
-        const prod = item.products;
+      order.order_items?.forEach((item: any) => {
+        const prod = Array.isArray(item.products) ? item.products[0] : item.products;
         if (prod) {
           const prodName = prod.name || "Unknown Product";
           if (!productSalesMap.has(prodName)) {

@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
   Table,
   TableBody,
@@ -11,51 +14,87 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
+import { TablePagination } from "@/components/dashboard/table-pagination";
 
-export default async function AuditLogsPage() {
-  const supabase = await createClient();
+export default function AuditLogsPage() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const { data: rawLogs, error } = await supabase
-    .from("audit_logs")
-    .select(`
-      id,
-      action,
-      entity_type,
-      entity_id,
-      details,
-      created_at,
-      user_id
-    `)
-    .order("created_at", { ascending: false });
+  const fetchLogs = async () => {
+    setIsLoading(true);
+    const supabase = createClient();
 
-  if (error) {
-    console.error("Error fetching audit logs:", error);
-  }
+    // Get total count
+    const { count, error: countError } = await supabase
+      .from("audit_logs")
+      .select("*", { count: "exact", head: true });
 
-  const logsData = rawLogs || [];
-  
-  // Fetch users for the logs
-  const userIds = Array.from(new Set(logsData.map(log => log.user_id).filter(Boolean))) as string[];
-  let usersMap: Record<string, { full_name: string | null; email: string }> = {};
-  
-  if (userIds.length > 0) {
-    const { data: usersData, error: usersError } = await supabase
-      .from("users")
-      .select("id, full_name, email")
-      .in("id", userIds);
-      
-    if (!usersError && usersData) {
-      usersMap = usersData.reduce((acc, user) => {
-        acc[user.id] = user;
-        return acc;
-      }, {} as Record<string, { full_name: string | null; email: string }>);
+    if (countError) {
+      console.error("Error fetching audit logs count:", countError.message || countError);
     }
-  }
+    
+    setTotalItems(count || 0);
 
-  const logs = logsData.map(log => ({
-    ...log,
-    users: log.user_id ? usersMap[log.user_id] : null
-  }));
+    // Fetch paginated logs
+    const from = (currentPage - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    const { data: rawLogs, error } = await supabase
+      .from("audit_logs")
+      .select(`
+        id,
+        action,
+        entity_type,
+        entity_id,
+        details,
+        created_at,
+        user_id
+      `)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error("Error fetching audit logs:", error.message || error);
+    }
+
+    const logsData = rawLogs || [];
+    
+    // Fetch users for the logs
+    const userIds = Array.from(new Set(logsData.map(log => log.user_id).filter(Boolean))) as string[];
+    let usersMap: Record<string, { full_name: string | null; email: string }> = {};
+    
+    if (userIds.length > 0) {
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("id, full_name, email")
+        .in("id", userIds);
+        
+      if (!usersError && usersData) {
+        usersMap = usersData.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as Record<string, { full_name: string | null; email: string }>);
+      }
+    }
+
+    const processedLogs = logsData.map(log => ({
+      ...log,
+      users: log.user_id ? usersMap[log.user_id] : null
+    }));
+
+    setLogs(processedLogs);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const getActionBadgeColor = (action: string) => {
     switch (action) {
@@ -68,7 +107,7 @@ export default async function AuditLogsPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 pt-6">
+    <div className="flex-1 space-y-6 p-6 pt-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Audit Logs</h2>
@@ -81,27 +120,33 @@ export default async function AuditLogsPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>
             A chronological list of all recorded system events.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-border">
+        <CardContent className="p-0">
+          <div className="border-t border-border/50">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Timestamp</TableHead>
+                  <TableHead className="pl-6">Timestamp</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Action</TableHead>
                   <TableHead>Entity</TableHead>
-                  <TableHead>Details</TableHead>
+                  <TableHead className="pr-6">Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!logs || logs.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      Loading logs...
+                    </TableCell>
+                  </TableRow>
+                ) : !logs || logs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No logs found.
@@ -113,7 +158,7 @@ export default async function AuditLogsPage() {
                     const userEmail = (log.users as any)?.email || "";
                     return (
                       <TableRow key={log.id}>
-                        <TableCell className="font-medium whitespace-nowrap">
+                        <TableCell className="font-medium whitespace-nowrap pl-6">
                           {format(new Date(log.created_at), "MMM d, yyyy HH:mm:ss")}
                         </TableCell>
                         <TableCell>
@@ -135,7 +180,7 @@ export default async function AuditLogsPage() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="pr-6">
                           {log.details}
                         </TableCell>
                       </TableRow>
@@ -145,6 +190,18 @@ export default async function AuditLogsPage() {
               </TableBody>
             </Table>
           </div>
+          <TablePagination
+            page={currentPage}
+            totalPages={totalPages || 1}
+            pageSize={itemsPerPage}
+            totalItems={totalItems}
+            itemLabel="logs"
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(s) => {
+              setItemsPerPage(s);
+              setCurrentPage(1);
+            }}
+          />
         </CardContent>
       </Card>
     </div>

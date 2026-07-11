@@ -94,6 +94,7 @@ export default function InventoryPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSupplyOpen, setIsSupplyOpen] = useState(false);
+  const [isNewCategory, setIsNewCategory] = useState(false);
   
   // Form State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -118,6 +119,7 @@ export default function InventoryPage() {
 
   const openAddModal = () => {
     setFormData({ name: "", category: "", price: "", stock: "" });
+    setIsNewCategory(false);
     setIsAddOpen(true);
   };
 
@@ -129,6 +131,7 @@ export default function InventoryPage() {
       price: product.price.toString(),
       stock: product.stock_quantity.toString(),
     });
+    setIsNewCategory(false);
     setIsEditOpen(true);
   };
 
@@ -226,7 +229,21 @@ export default function InventoryPage() {
     }
   };
 
-  const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+  const DEFAULT_CATEGORIES = [
+    "Beverages",
+    "Snacks",
+    "Canned Goods",
+    "Noodles",
+    "Condiments",
+    "Toiletries",
+    "Household Supplies",
+    "Candies & Sweets",
+    "Baked Goods",
+  ];
+  
+  const uniqueCategories = Array.from(
+    new Set([...DEFAULT_CATEGORIES, ...products.map(p => p.category)])
+  ).filter(Boolean).sort();
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -497,19 +514,44 @@ export default function InventoryPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="category">Category</Label>
-              <Input 
-                id="category" 
-                name="category" 
-                list="category-options" 
-                value={formData.category} 
-                onChange={handleInputChange} 
-                placeholder="Type or select a category"
-              />
-              <datalist id="category-options">
-                {uniqueCategories.map(cat => (
-                  <option key={cat} value={cat} />
-                ))}
-              </datalist>
+              {!isNewCategory ? (
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(val) => {
+                    if (val === "Others") {
+                      setIsNewCategory(true);
+                      setFormData(prev => ({ ...prev, category: "" }));
+                    } else {
+                      setFormData(prev => ({ ...prev, category: val }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueCategories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                    <SelectItem value="Others">Others (Add New)</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex gap-2">
+                  <Input 
+                    id="category" 
+                    name="category" 
+                    value={formData.category} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter new category"
+                    autoFocus
+                  />
+                  <Button type="button" variant="outline" onClick={() => {
+                    setIsNewCategory(false);
+                    setFormData(prev => ({ ...prev, category: uniqueCategories[0] || "" }));
+                  }}>Cancel</Button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -542,19 +584,44 @@ export default function InventoryPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-category">Category</Label>
-              <Input 
-                id="edit-category" 
-                name="category" 
-                list="category-options-edit" 
-                value={formData.category} 
-                onChange={handleInputChange} 
-                placeholder="Type or select a category"
-              />
-              <datalist id="category-options-edit">
-                {uniqueCategories.map(cat => (
-                  <option key={cat} value={cat} />
-                ))}
-              </datalist>
+              {!isNewCategory ? (
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(val) => {
+                    if (val === "Others") {
+                      setIsNewCategory(true);
+                      setFormData(prev => ({ ...prev, category: "" }));
+                    } else {
+                      setFormData(prev => ({ ...prev, category: val }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {uniqueCategories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                    <SelectItem value="Others">Others (Add New)</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex gap-2">
+                  <Input 
+                    id="edit-category" 
+                    name="category" 
+                    value={formData.category} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter new category"
+                    autoFocus
+                  />
+                  <Button type="button" variant="outline" onClick={() => {
+                    setIsNewCategory(false);
+                    setFormData(prev => ({ ...prev, category: editingProduct?.category || uniqueCategories[0] || "" }));
+                  }}>Cancel</Button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
