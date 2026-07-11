@@ -48,13 +48,13 @@ export default function SignInPage() {
             <span className="font-bold tracking-tight text-white/90 text-lg">Beagea Sari-Sari</span>
           </div>
 
-          <h1 className="text-2xl md:text-[2rem] leading-[1.1] font-bold tracking-tight mb-10">
-            Where local business<br />
-            meets smart,<br />
-            modern inventory.
+          <h1 className="text-xl md:text-[2rem] leading-[1.1] font-bold tracking-tight mb-6 md:mb-10">
+            Where local business<br className="hidden md:block" />
+            <span className="md:hidden"> meets smart, modern inventory.</span>
+            <span className="hidden md:inline">meets smart,<br />modern inventory.</span>
           </h1>
 
-          <div className="space-y-5">
+          <div className="hidden md:block space-y-5">
             <div className="flex gap-3">
               <CheckCircle />
               <div>
@@ -95,7 +95,8 @@ export default function SignInPage() {
             Welcome back
           </h2>
           <p className="text-[13px] text-gray-500 mb-8 leading-relaxed">
-            Sign in with Google to access your dashboard, track sales, and manage inventory.
+            <span className="hidden md:inline">Sign in with Google to access your dashboard, track sales, and manage inventory.</span>
+            <span className="md:hidden">Sign in to access your dashboard.</span>
           </p>
 
           <div className="mb-8">

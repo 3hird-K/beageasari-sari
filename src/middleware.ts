@@ -49,7 +49,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // Intercept Supabase OAuth fallback redirects to the root with a code parameter
+  if (pathname === "/" && searchParams.has("code")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
 
   // If user is NOT authenticated and trying to access a protected route → redirect to sign-in
   const isProtected = protectedRoutes.some(
