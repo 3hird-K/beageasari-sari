@@ -1,5 +1,3 @@
-"use client";
-
 import { Download, ArrowUpRight, ArrowDownRight, Users, CreditCard, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,18 +10,49 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/server";
+import { format } from "date-fns";
+import { SalesChart } from "./components/sales-chart";
 
-const recentTransactions = [
-  { id: "TRX-1092", date: "Today, 10:45 AM", customer: "Walk-in", items: 4, total: 24.50, status: "Completed" },
-  { id: "TRX-1091", date: "Today, 10:12 AM", customer: "Sarah J.", items: 12, total: 145.20, status: "Completed" },
-  { id: "TRX-1090", date: "Today, 09:30 AM", customer: "Walk-in", items: 1, total: 4.49, status: "Completed" },
-  { id: "TRX-1089", date: "Yesterday, 04:20 PM", customer: "Mike T.", items: 5, total: 65.00, status: "Refunded" },
-  { id: "TRX-1088", date: "Yesterday, 03:15 PM", customer: "Walk-in", items: 3, total: 18.90, status: "Completed" },
-  { id: "TRX-1087", date: "Yesterday, 01:10 PM", customer: "Elena G.", items: 8, total: 92.15, status: "Completed" },
-  { id: "TRX-1086", date: "Yesterday, 11:30 AM", customer: "Walk-in", items: 2, total: 8.98, status: "Completed" },
-];
+export default async function ReportsPage() {
+  const supabase = await createClient();
+  
+  const { data: orders, error } = await supabase
+    .from("orders")
+    .select(`
+      id,
+      created_at,
+      total_amount,
+      status,
+      order_items ( quantity )
+    `)
+    .order("created_at", { ascending: false });
 
-export default function ReportsPage() {
+  let totalRevenue = 0;
+  let totalTransactions = 0;
+  let avgOrderValue = 0;
+  let recentTransactions: any[] = [];
+
+  if (orders && !error) {
+    totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+    totalTransactions = orders.length;
+    avgOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+    
+    recentTransactions = orders.map(order => {
+      // @ts-ignore
+      const itemsCount = order.order_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
+      return {
+        id: "TRX-" + order.id.substring(0, 8).toUpperCase(),
+        rawId: order.id,
+        date: format(new Date(order.created_at), "MMM dd, yyyy h:mm a"),
+        customer: "Walk-in", 
+        items: itemsCount,
+        total: Number(order.total_amount),
+        status: (order.status || "Completed").charAt(0).toUpperCase() + (order.status || "completed").slice(1)
+      };
+    });
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-muted/10 h-full overflow-y-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -44,13 +73,13 @@ export default function ReportsPage() {
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$12,450.00</div>
+            <div className="text-2xl font-bold">₱{totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center">
               <span className="text-emerald-500 flex items-center mr-1">
                 <ArrowUpRight className="size-3 mr-0.5" />
-                +14.5%
+                Live Data
               </span>
-              from last month
+              Calculated from all sales
             </p>
           </CardContent>
         </Card>
@@ -60,32 +89,36 @@ export default function ReportsPage() {
             <CreditCard className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">{totalTransactions}</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center">
               <span className="text-emerald-500 flex items-center mr-1">
                 <ArrowUpRight className="size-3 mr-0.5" />
-                +8.2%
+                Live Data
               </span>
-              from last month
+              Total recorded sales
             </p>
           </CardContent>
         </Card>
-        <Card className="border-border/50 shadow-sm">
+        <Card className="border-border/50 shadow-sm md:col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$21.73</div>
+            <div className="text-2xl font-bold">₱{avgOrderValue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center">
-              <span className="text-rose-500 flex items-center mr-1">
-                <ArrowDownRight className="size-3 mr-0.5" />
-                -2.1%
+              <span className="text-emerald-500 flex items-center mr-1">
+                <ArrowUpRight className="size-3 mr-0.5" />
+                Live Data
               </span>
-              from last month
+              Average spend per order
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1">
+        <SalesChart orders={orders || []} />
       </div>
 
       <Card className="border-border/50 shadow-sm">
@@ -97,38 +130,46 @@ export default function ReportsPage() {
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow>
-                <TableHead className="w-[120px]">Transaction ID</TableHead>
+                <TableHead className="w-[140px] pl-6">Transaction ID</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead className="text-right">Items</TableHead>
                 <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead className="text-right pr-6">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentTransactions.map((trx) => (
-                <TableRow key={trx.id} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-mono text-xs font-medium">
-                    {trx.id}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{trx.date}</TableCell>
-                  <TableCell>{trx.customer}</TableCell>
-                  <TableCell className="text-right font-medium">{trx.items}</TableCell>
-                  <TableCell className="text-right font-mono">${trx.total.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge 
-                      variant={trx.status === "Completed" ? "default" : "secondary"}
-                      className={
-                        trx.status === "Completed" 
-                          ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20" 
-                          : "bg-muted text-muted-foreground hover:bg-muted"
-                      }
-                    >
-                      {trx.status}
-                    </Badge>
+              {recentTransactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    No transactions found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                recentTransactions.map((trx) => (
+                  <TableRow key={trx.rawId} className="hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-mono text-xs font-medium text-muted-foreground pl-6">
+                      {trx.id}
+                    </TableCell>
+                    <TableCell className="text-sm">{trx.date}</TableCell>
+                    <TableCell>{trx.customer}</TableCell>
+                    <TableCell className="text-right font-medium">{trx.items}</TableCell>
+                    <TableCell className="text-right font-mono">₱{trx.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right pr-6">
+                      <Badge 
+                        variant={trx.status === "Completed" ? "default" : "secondary"}
+                        className={
+                          trx.status === "Completed" 
+                            ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20" 
+                            : "bg-muted text-muted-foreground hover:bg-muted"
+                        }
+                      >
+                        {trx.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
