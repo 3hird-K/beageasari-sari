@@ -148,9 +148,14 @@ export default function LandingPage() {
             <Store className="size-4" />
             <span className="font-bold text-sm tracking-tight">Beagea Sari-Sari Store</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Beagea Sari-Sari Store. All rights reserved.
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} Beagea Sari-Sari Store. All rights reserved.
+            </p>
+            <p className="text-xs text-muted-foreground/70">
+              Developed by <a href="https://github.com/3hird-K" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-primary transition-colors hover:underline">3hird-K</a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
