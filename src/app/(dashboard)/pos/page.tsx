@@ -409,7 +409,7 @@ export default function PosPage() {
               </div>
             )}
           </div>
-          <DialogFooter className="gap-2 sm:gap-0 pt-1">
+          <DialogFooter className="gap-2 sm:gap-2 pt-2">
             <Button variant="outline" onClick={() => setIsCheckoutOpen(false)} disabled={isRecording}>
               Cancel
             </Button>
