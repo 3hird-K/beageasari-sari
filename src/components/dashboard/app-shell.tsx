@@ -70,7 +70,7 @@ export function AppShell({ children, user, profile }: { children: React.ReactNod
         </header>
 
         {/* ── Scrollable page content ── */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
           {children}
         </main>
       </div>

@@ -9,8 +9,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20 selection:text-primary">
       {/* Navbar */}
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/60 backdrop-blur-xl">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/pos" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
             <div className="size-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
               <Store className="size-4" />
             </div>
@@ -18,7 +18,7 @@ export default function LandingPage() {
               <p className="text-sm font-extrabold tracking-tight leading-none">BEAGEA</p>
               <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Sari-Sari Store</p>
             </div>
-          </div>
+          </Link>
           <div className="flex items-center gap-4">
             <Link href="/sign-in">
               <Button variant="outline" className="h-9 px-4 font-bold text-xs border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent transition-all">

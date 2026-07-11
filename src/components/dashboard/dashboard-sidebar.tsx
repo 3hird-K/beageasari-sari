@@ -143,10 +143,12 @@ export function SidebarContent({ collapsed = false, onItemClick, user, profile }
   return (
     <div className="flex h-full flex-col">
       {/* ── Brand ── */}
-      <div
+      <Link
+        href="/"
         className={cn(
-          "flex shrink-0 items-center gap-3",
+          "flex shrink-0 items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer",
           collapsed ? "flex-col items-center px-0" : "px-2",
+          "h-16"
         )}
       >
         <div
@@ -175,7 +177,7 @@ export function SidebarContent({ collapsed = false, onItemClick, user, profile }
             </p>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* ── Nav section ── */}
       <div

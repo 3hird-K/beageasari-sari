@@ -45,6 +45,7 @@ export default function PosPage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [cashReceived, setCashReceived] = useState<string>("");
   const [lastReceiptData, setLastReceiptData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'products' | 'cart'>('products');
 
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
@@ -172,9 +173,35 @@ export default function PosPage() {
   };
 
   return (
-    <div className="flex h-full flex-col lg:flex-row overflow-hidden bg-muted/10">
+    <div className="absolute inset-0 flex flex-col lg:flex-row overflow-hidden bg-muted/10">
+      {/* Mobile View Toggle */}
+      <div className="lg:hidden p-3 bg-background border-b border-border/50 shrink-0 flex gap-2 z-20 shadow-sm relative">
+        <Button 
+          variant={activeTab === 'products' ? 'default' : 'outline'} 
+          className="flex-1 font-bold rounded-xl"
+          onClick={() => setActiveTab('products')}
+        >
+          <LayoutGrid className="mr-2 size-4" /> Products
+        </Button>
+        <Button 
+          variant={activeTab === 'cart' ? 'default' : 'outline'} 
+          className="flex-1 font-bold rounded-xl relative"
+          onClick={() => setActiveTab('cart')}
+        >
+          <ShoppingBag className="mr-2 size-4" /> Current Order
+          {cart.reduce((a, b) => a + b.quantity, 0) > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex min-w-[20px] h-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground font-bold shadow-sm animate-in zoom-in">
+              {cart.reduce((a, b) => a + b.quantity, 0)}
+            </span>
+          )}
+        </Button>
+      </div>
+
       {/* Left Panel: Products */}
-      <div className="flex-1 flex flex-col min-w-0 border-r border-border/50">
+      <div className={cn(
+        "flex-1 flex-col min-w-0 min-h-0 lg:border-r border-border/50",
+        activeTab === 'cart' ? "hidden lg:flex" : "flex"
+      )}>
         <div className="p-4 bg-background border-b border-border/50 space-y-4 shadow-sm z-10 shrink-0">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
@@ -188,27 +215,29 @@ export default function PosPage() {
             </div>
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            {categories.map((cat) => (
-              <Button
-                key={cat}
-                variant={selectedCategory === cat ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(cat)}
-                className={cn(
-                  "rounded-full whitespace-nowrap px-4 shadow-none transition-all",
-                  selectedCategory === cat 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-background hover:bg-muted"
-                )}
-              >
-                {cat}
-              </Button>
-            ))}
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex w-max gap-2 px-1">
+              {categories.map((cat) => (
+                <Button
+                  key={cat}
+                  variant={selectedCategory === cat ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={cn(
+                    "rounded-full whitespace-nowrap px-4 shadow-none transition-all shrink-0",
+                    selectedCategory === cat 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-background hover:bg-muted"
+                  )}
+                >
+                  {cat}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-muted/20 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="flex-1 overflow-y-auto p-4 bg-muted/20 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary/20 hover:[&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb]:rounded-full [scrollbar-width:thin]">
           {isLoading ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
               <LayoutGrid className="size-12 mb-4 animate-pulse opacity-20" />
@@ -280,7 +309,10 @@ export default function PosPage() {
       </div>
 
       {/* Right Panel: Cart */}
-      <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col bg-background shadow-xl lg:shadow-none z-20 shrink-0">
+      <div className={cn(
+        "w-full lg:w-[380px] xl:w-[420px] flex-col bg-background shadow-xl lg:shadow-none z-20 min-h-0",
+        activeTab === 'products' ? "hidden lg:flex" : "flex flex-1 lg:flex-none"
+      )}>
         <div className="p-4 border-b border-border/50 flex items-center justify-between bg-card text-card-foreground shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingBag className="size-5 text-primary" />
@@ -291,7 +323,7 @@ export default function PosPage() {
           </Badge>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary/20 hover:[&::-webkit-scrollbar-thumb]:bg-primary/40 [&::-webkit-scrollbar-thumb]:rounded-full [scrollbar-width:thin]">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 space-y-4">
               <ShoppingBag className="size-16" strokeWidth={1} />
