@@ -87,8 +87,8 @@ export async function ActivityFeed({ className }: { className?: string }) {
     });
   }
 
-  // Trim to max 4 activities
-  const displayActivities = activities.slice(0, 4);
+  // Trim to max 3 activities
+  const displayActivities = activities.slice(0, 3);
 
   return (
     <Card className={cn("flex h-full flex-col", className)}>

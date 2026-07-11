@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Table,
@@ -23,7 +23,7 @@ export default function AuditLogsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoading(true);
     const supabase = createClient();
 
@@ -87,12 +87,11 @@ export default function AuditLogsPage() {
 
     setLogs(processedLogs);
     setIsLoading(false);
-  };
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchLogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, itemsPerPage]);
+  }, [fetchLogs]);
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 

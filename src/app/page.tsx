@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Store, ShoppingCart, Package, TrendingUp, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Store, ShoppingCart, Coffee, Package, MapPin, ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -16,16 +16,13 @@ export default function LandingPage() {
             </div>
             <div>
               <p className="text-sm font-extrabold tracking-tight leading-none">BEAGEA</p>
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Sari-Sari POS</p>
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Sari-Sari Store</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/sign-in" className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
-              Log in
-            </Link>
-            <Link href="/sign-up">
-              <Button className="h-9 px-4 font-bold text-xs bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95">
-                Get Started
+            <Link href="/sign-in">
+              <Button variant="outline" className="h-9 px-4 font-bold text-xs border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent transition-all">
+                Staff Login
               </Button>
             </Link>
           </div>
@@ -44,49 +41,44 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
             </span>
-            Beagea v2.0 is now live
+            Open Daily • 6 AM to 10 PM
           </div>
           
           <h1 className="max-w-4xl text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter mb-6 bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent animate-fade-in-up" style={{ animationDelay: "100ms" }}>
-            The modern POS built for <br className="hidden md:block" />
-            <span className="bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">Sari-Sari Stores.</span>
+            Welcome to <br className="hidden md:block" />
+            <span className="bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">Beagea Sari-Sari Store!</span>
           </h1>
           
           <p className="max-w-2xl text-lg md:text-xl text-muted-foreground mb-10 font-medium animate-fade-in-up" style={{ animationDelay: "200ms" }}>
-            Empower your local business with intelligent inventory tracking, seamless checkout experiences, and real-time sales reports. Fast, beautiful, and completely tailored for you.
+            Your friendly neighborhood stop for daily essentials, cold drinks, snacks, and everything you need in a pinch. Convenient, affordable, and always welcoming.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center gap-4 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-            <Link href="/sign-up">
+            <Link href="#offerings">
               <Button className="h-12 px-8 font-bold text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/25 rounded-full transition-all hover:scale-105 active:scale-95 group">
-                Start for free
-                <ArrowRight className="ml-2 size-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="/pos">
-              <Button variant="outline" className="h-12 px-8 font-bold text-sm rounded-full border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent transition-all">
-                View Demo
+                See What We Offer
+                <ShoppingCart className="ml-2 size-4 group-hover:scale-110 transition-transform" />
               </Button>
             </Link>
           </div>
         </section>
 
-        {/* Feature Grid */}
-        <section className="w-full max-w-6xl mx-auto py-24 px-4">
+        {/* Offerings Grid */}
+        <section id="offerings" className="w-full max-w-6xl mx-auto py-24 px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Everything you need to run your store</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">Replace the old notebook with a powerful digital system. Beagea simplifies operations so you can focus on growing your business.</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Stocked with all your favorites</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">From early morning coffee to late-night snacks, Beagea Sari-Sari Store has you covered. Drop by and get what you need.</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-6">
             {/* Feature 1 */}
             <div className="group rounded-3xl border border-border/50 bg-card/40 backdrop-blur-sm p-8 transition-all hover:bg-card/60 hover:shadow-2xl hover:shadow-primary/5">
               <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ShoppingCart className="size-6 text-primary" />
+                <Coffee className="size-6 text-primary" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Lightning Fast Checkout</h3>
+              <h3 className="text-xl font-bold mb-3">Drinks & Refreshments</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Process transactions in seconds with our optimized POS interface. Supports barcode scanning and quick-tap popular items.
+                Ice-cold sodas, bottled water, energy drinks, and coffee sachets. Perfect to beat the heat or kickstart your day.
               </p>
             </div>
             
@@ -95,80 +87,53 @@ export default function LandingPage() {
               <div className="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Package className="size-6 text-orange-500" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Smart Inventory</h3>
+              <h3 className="text-xl font-bold mb-3">Pantry Essentials</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Never run out of stock unexpectedly. Get automatic low-stock alerts and easily track product categories and variants.
+                Canned goods, noodles, rice, cooking oil, and condiments. Everything you need to complete your home-cooked meals.
               </p>
             </div>
             
             {/* Feature 3 */}
             <div className="group rounded-3xl border border-border/50 bg-card/40 backdrop-blur-sm p-8 transition-all hover:bg-card/60 hover:shadow-2xl hover:shadow-emerald-500/5">
               <div className="size-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <TrendingUp className="size-6 text-emerald-500" />
+                <ShoppingCart className="size-6 text-emerald-500" />
               </div>
-              <h3 className="text-xl font-bold mb-3">Real-time Analytics</h3>
+              <h3 className="text-xl font-bold mb-3">Snacks & Sweets</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Understand your business health. Generate daily sales reports, track profit margins, and identify your best-selling items effortlessly.
+                A wide variety of chips, biscuits, candies, and chocolates. Grab a quick bite for your merienda break.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Benefits Section */}
+        {/* Call to Action for Customers and Staff */}
         <section className="w-full border-t border-border/50 bg-accent/20 py-24">
           <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Built for security and reliability</h2>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Visit us today!</h2>
               <p className="text-lg text-muted-foreground">
-                Your store data is precious. We ensure it&apos;s always backed up, secure, and accessible exactly when you need it.
+                We are proud to serve the community with a smile. Support your local sari-sari store and enjoy the convenience of quick, friendly service right in your neighborhood.
               </p>
-              <ul className="space-y-4">
-                {[
-                  "Cloud-synced data prevents loss",
-                  "Secure Manager and Cashier roles",
-                  "Works smoothly even on slow networks",
-                  "Hardware integration for printers & scanners"
-                ].map((benefit, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <CheckCircle2 className="size-5 text-emerald-500 shrink-0" />
-                    <span className="font-medium text-sm">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="pt-4">
-                <Link href="/sign-up">
-                  <Button className="font-bold">Create your store</Button>
-                </Link>
+              <div className="flex items-center gap-3">
+                <MapPin className="size-5 text-emerald-500 shrink-0" />
+                <span className="font-medium text-sm">Located at the heart of the community.</span>
               </div>
             </div>
             
             <div className="relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-primary to-teal-400 rounded-3xl blur opacity-20" />
-              <div className="relative rounded-3xl border border-border/50 bg-card p-6 shadow-2xl flex flex-col gap-4">
-                {/* Mock UI Element */}
-                <div className="flex items-center justify-between border-b border-border/50 pb-4">
-                  <div>
-                    <h4 className="font-bold">Today&apos;s Sales</h4>
-                    <p className="text-xs text-muted-foreground">Updated just now</p>
-                  </div>
-                  <div className="text-right">
-                    <h4 className="text-xl font-bold text-emerald-500">₱ 4,250.00</h4>
-                    <p className="text-xs text-emerald-500/70">+12% vs yesterday</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 py-2">
-                  <div className="size-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                    <ShieldCheck className="size-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="h-2 w-full bg-accent rounded-full overflow-hidden">
-                      <div className="h-full bg-primary w-[75%]" />
-                    </div>
-                    <div className="flex justify-between mt-2 text-[10px] font-bold text-muted-foreground">
-                      <span>System Status</span>
-                      <span className="text-primary">100% Secure</span>
-                    </div>
-                  </div>
+              <div className="relative rounded-3xl border border-border/50 bg-card p-8 shadow-2xl flex flex-col gap-6 text-center">
+                <h3 className="text-2xl font-bold">Staff Access</h3>
+                <p className="text-sm text-muted-foreground">
+                  Are you a cashier or store manager? Log in here to access the Beagea POS, manage inventory, and record sales.
+                </p>
+                <div className="pt-2">
+                  <Link href="/sign-in">
+                    <Button className="w-full h-12 font-bold group">
+                      Open POS Terminal
+                      <ArrowRight className="ml-2 size-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -181,10 +146,10 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 flex flex-col items-center gap-4">
           <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
             <Store className="size-4" />
-            <span className="font-bold text-sm tracking-tight">Beagea Sari-Sari POS</span>
+            <span className="font-bold text-sm tracking-tight">Beagea Sari-Sari Store</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Beagea POS System. All rights reserved.
+            &copy; {new Date().getFullYear()} Beagea Sari-Sari Store. All rights reserved.
           </p>
         </div>
       </footer>

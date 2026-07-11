@@ -149,6 +149,18 @@ export default function GetHelpPage() {
                   Yes, navigate to the Reports page. You can filter the dashboard by &quot;Today&quot;, &quot;Yesterday&quot;, &quot;This Week&quot;, or select a custom date range to review past transactions and shift summaries.
                 </AccordionContent>
               </AccordionItem>
+              <AccordionItem value="item-6">
+                <AccordionTrigger>How do I handle &quot;Utang&quot; (Credit) for regular customers?</AccordionTrigger>
+                <AccordionContent>
+                  When checking out an order in the POS, select &quot;Utang&quot; as the payment method. You will be prompted to select or add the customer&apos;s name. Their unpaid balance will be tracked in the customer tabs section.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-7">
+                <AccordionTrigger>How do I set up &quot;Tingi&quot; (Per Piece) pricing?</AccordionTrigger>
+                <AccordionContent>
+                  When adding a product like a pack of cigarettes or coffee sachets, you can enable &quot;Tingi Mode&quot; in the item settings. This allows you to track the bulk stock while selling individual pieces at a separate retail price.
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </CardContent>
         </Card>

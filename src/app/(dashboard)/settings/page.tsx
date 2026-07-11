@@ -146,6 +146,22 @@ export default function SettingsPage() {
                     </div>
                     <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] uppercase font-bold px-2 py-0">Enabled</Badge>
                   </div>
+                  <Separator className="bg-border/50" />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-foreground">Utang (Credit) Tracking</p>
+                      <p className="text-[11px] text-muted-foreground">Allow regular customers to purchase items on credit and manage their tabs.</p>
+                    </div>
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] uppercase font-bold px-2 py-0">Enabled</Badge>
+                  </div>
+                  <Separator className="bg-border/50" />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-foreground">Tingi (Per Piece) Mode</p>
+                      <p className="text-[11px] text-muted-foreground">Enable easy splitting of bulk items into individual sellable units (e.g., 1 pack to 12 pieces).</p>
+                    </div>
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] uppercase font-bold px-2 py-0">Enabled</Badge>
+                  </div>
                 </CardContent>
               </Card>
             </div>

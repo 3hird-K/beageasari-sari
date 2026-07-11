@@ -79,6 +79,15 @@ export async function deleteTransactionAction(orderId: string) {
     return { success: false, error: deleteError.message };
   }
 
+  // Import logActivity dynamically or directly if it's imported at the top
+  const { logActivity } = await import("@/lib/logger");
+  await logActivity({
+    action: "DELETE",
+    entity_type: "ORDER",
+    entity_id: orderId,
+    details: `Deleted transaction (Order ID: ${orderId})`
+  });
+
   revalidatePath("/reports");
   revalidatePath("/inventory");
   return { success: true };

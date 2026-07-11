@@ -172,7 +172,7 @@ export default async function Home() {
   if (recentOrders) {
     recentOrders.forEach(order => {
       order.order_items?.forEach((item: any) => {
-        const prod = Array.isArray(item.products) ? item.products[0] : item.products;
+        const prod: any = Array.isArray(item.products) ? item.products[0] : item.products;
         if (prod) {
           const prodName = prod.name || "Unknown Product";
           if (!productSalesMap.has(prodName)) {

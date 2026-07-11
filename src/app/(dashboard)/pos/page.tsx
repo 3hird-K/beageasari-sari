@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingBag, Banknote, LayoutGrid, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Search, Plus, Minus, Trash2, ShoppingBag, Banknote, LayoutGrid, Loader2, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,15 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { recordSaleAction } from "./actions";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useReactToPrint } from "react-to-print";
+import { Receipt } from "@/components/dashboard/receipt";
 
 type Product = {
   id: string;
@@ -33,6 +42,12 @@ export default function PosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [cashReceived, setCashReceived] = useState<string>("");
+  const [lastReceiptData, setLastReceiptData] = useState<any>(null);
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  const reactToPrintFn = useReactToPrint({ contentRef });
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -121,8 +136,34 @@ export default function PosPage() {
     
     if (result.success) {
       toast.success("Sale recorded successfully!");
+      
+      // Save data for receipt before clearing cart
+      const receiptData = {
+        items: cart.map((i) => ({
+          name: i.product.name,
+          quantity: i.quantity,
+          price: i.product.price,
+          total: i.product.price * i.quantity,
+        })),
+        total,
+        cash: parseFloat(cashReceived || "0"),
+        change: Math.max(0, parseFloat(cashReceived || "0") - total),
+        receiptNumber: `RE-${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date(),
+      };
+      setLastReceiptData(receiptData);
+
       clearCart();
+      setIsCheckoutOpen(false);
+      setCashReceived("");
       fetchProducts(); // Refresh stock quantities
+      
+      // Auto-print receipt after a short delay to allow state update
+      setTimeout(() => {
+        if (reactToPrintFn) {
+          reactToPrintFn();
+        }
+      }, 500);
     } else {
       toast.error(result.error || "Failed to record sale. Please try again.");
     }
@@ -313,16 +354,93 @@ export default function PosPage() {
             </Button>
             <Button 
               disabled={cart.length === 0 || isRecording}
-              onClick={handleRecordSale}
+              onClick={() => setIsCheckoutOpen(true)}
             >
               {isRecording ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
                 <Banknote className="mr-2 size-4" />
               )}
-              {isRecording ? "Recording..." : "Record"}
+              {isRecording ? "Processing..." : "Checkout"}
             </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Checkout Dialog */}
+      <Dialog open={isCheckoutOpen} onOpenChange={(open) => !isRecording && setIsCheckoutOpen(open)}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>Complete Sale</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="bg-muted/30 p-3.5 rounded-xl border border-border/50 space-y-2.5">
+              <div className="flex justify-between text-muted-foreground text-sm">
+                <span>Total Items</span>
+                <span className="font-medium text-foreground">{cart.reduce((a, b) => a + b.quantity, 0)}</span>
+              </div>
+              <div className="flex justify-between items-center font-bold border-t border-border/60 pt-2.5">
+                <span className="text-base">Total Due</span>
+                <span className="text-2xl text-primary tracking-tight">₱{total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 px-1">
+              <label className="text-sm font-medium text-foreground/90">Cash Received</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₱</span>
+                <Input 
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  autoFocus
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  className="pl-8 h-12 text-lg font-mono bg-background shadow-sm border-border"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            {parseFloat(cashReceived) >= total && (
+              <div className="flex justify-between items-center font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20 animate-in fade-in zoom-in-95 duration-200">
+                <span className="text-base">Change</span>
+                <span className="text-xl tracking-tight">₱{(parseFloat(cashReceived) - total).toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 pt-1">
+            <Button variant="outline" onClick={() => setIsCheckoutOpen(false)} disabled={isRecording}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRecordSale} 
+              disabled={isRecording || !cashReceived || parseFloat(cashReceived) < total}
+            >
+              {isRecording ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Printer className="mr-2 size-4" />
+              )}
+              {isRecording ? "Recording..." : "Record & Print"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden Receipt for Printing */}
+      <div className="hidden">
+        <div ref={contentRef} id="print-root">
+          {lastReceiptData && (
+            <Receipt
+              items={lastReceiptData.items}
+              total={lastReceiptData.total}
+              cash={lastReceiptData.cash}
+              change={lastReceiptData.change}
+              receiptNumber={lastReceiptData.receiptNumber}
+              date={lastReceiptData.date}
+            />
+          )}
         </div>
       </div>
     </div>
